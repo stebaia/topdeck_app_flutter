@@ -26,17 +26,31 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<CheckAuthStatusEvent>(_onCheckAuthStatus);
     on<SignUpEvent>(_onSignUp);
     on<SignInEvent>(_onSignIn);
+    on<SignInWithGoogleEvent>(_onSignInWithGoogle);
+    on<SignInWithGoogleNativelyEvent>(_onSignInWithGoogleNatively);
     on<SignOutEvent>(_onSignOut);
     on<ResetPasswordEvent>(_onResetPassword);
     on<UpdatePasswordEvent>(_onUpdatePassword);
 
+    // Facciamo un check immediato dell'autenticazione
+    _checkAuthStatus();
+
     // Listen to authentication state changes
     _authSubscription = _authRepository.onAuthStateChange().listen((event) {
+      _logger.i('Auth state changed: ${event.event}');
       if (event.event == supabase.AuthChangeEvent.signedIn) {
-        add(CheckAuthStatusEvent());
+        _logger.i('User signed in, checking status');
+        _checkAuthStatus();
+      } else if (event.event == supabase.AuthChangeEvent.userUpdated) {
+        _logger.i('User updated, checking status');
+        _checkAuthStatus();
       } else if (event.event == supabase.AuthChangeEvent.signedOut) {
+        _logger.i('User signed out');
         emit(UnauthenticatedState());
       }
+    }, onError: (error) {
+      _logger.e('Error in auth state subscription: $error');
+      emit(AuthErrorState(message: 'Authentication error: $error'));
     });
   }
 
@@ -54,22 +68,32 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       
       if (_authRepository.isAuthenticated()) {
         final user = _authRepository.getCurrentUser();
+        _logger.i('User is authenticated: ${user?.id}');
         if (user != null) {
-          final profile = await _profileRepository.get(user.id);
-          if (profile != null) {
-            emit(AuthenticatedState(profile: profile));
-          } else {
-            emit(UnauthenticatedState());
+          try {
+            final profile = await _profileRepository.get(user.id);
+            if (profile != null) {
+              _logger.i('Profile retrieved successfully');
+              emit(AuthenticatedState(profile: profile));
+            } else {
+              _logger.w('Profile not found for authenticated user');
+              emit(UnauthenticatedState());
+            }
+          } catch (e) {
+            _logger.e('Error retrieving profile: $e');
+            emit(AuthErrorState(message: 'Error retrieving user profile: $e'));
           }
         } else {
+          _logger.w('No user even though authenticated');
           emit(UnauthenticatedState());
         }
       } else {
+        _logger.i('User is not authenticated');
         emit(UnauthenticatedState());
       }
     } catch (e) {
       _logger.e('Error checking auth status: $e');
-      emit(AuthErrorState(message: 'Authentication check failed'));
+      emit(AuthErrorState(message: 'Authentication check failed: $e'));
     }
   }
 
@@ -129,6 +153,70 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthErrorState(message: 'Login failed: $e'));
     }
   }
+  
+  /// Handle Google sign in event
+  Future<void> _onSignInWithGoogle(SignInWithGoogleEvent event, Emitter<AuthState> emit) async {
+    try {
+      emit(AuthLoadingState());
+      
+      _logger.i('Starting Google sign-in flow');
+      // Inizia il flusso di autenticazione OAuth con Google
+      final success = await _authRepository.signInWithGoogle();
+      
+      _logger.i('Google sign-in initiated: $success');
+      
+      // Se il flusso OAuth non è andato a buon fine (l'utente ha annullato il processo o c'è stato un errore)
+      if (!success) {
+        _logger.w('Google sign-in was not successful, emitting UnauthenticatedState');
+        emit(UnauthenticatedState());
+      }
+      
+      // Se success è true, il flusso OAuth è iniziato correttamente.
+      // In questo caso non emettiamo un nuovo stato perché l'utente sta completando l'autenticazione
+      // nel browser e quando torna all'app, l'evento onAuthStateChange rileverà il nuovo stato di autenticazione.
+      
+    } on supabase.AuthException catch (e) {
+      _logger.e('Auth exception during Google sign in: ${e.message}');
+      emit(AuthErrorState(message: e.message));
+    } catch (e) {
+      _logger.e('Error during Google sign in: $e');
+      emit(AuthErrorState(message: 'Google login failed: $e'));
+    }
+  }
+
+  /// Handle native Google sign in event
+  Future<void> _onSignInWithGoogleNatively(SignInWithGoogleNativelyEvent event, Emitter<AuthState> emit) async {
+    try {
+      emit(AuthLoadingState());
+      
+      _logger.i('Starting native Google sign-in flow');
+      
+      // Esegui l'autenticazione nativa con Google
+      final authResponse = await _authRepository.signInWithGoogleNatively();
+      
+      _logger.i('Google sign-in completed successfully');
+      
+      if (authResponse.user != null) {
+        final profile = await _profileRepository.get(authResponse.user!.id);
+        if (profile != null) {
+          emit(AuthenticatedState(profile: profile));
+        } else {
+          _logger.w('Profile not found after Google sign in');
+          emit(AuthErrorState(message: 'Profile not found'));
+        }
+      } else {
+        _logger.w('User is null after Google sign in');
+        emit(UnauthenticatedState());
+      }
+      
+    } on supabase.AuthException catch (e) {
+      _logger.e('Auth exception during native Google sign in: ${e.message}');
+      emit(AuthErrorState(message: e.message));
+    } catch (e) {
+      _logger.e('Error during native Google sign in: $e');
+      emit(AuthErrorState(message: 'Google login failed: $e'));
+    }
+  }
 
   /// Handle sign out event
   Future<void> _onSignOut(SignOutEvent event, Emitter<AuthState> emit) async {
@@ -171,6 +259,40 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } catch (e) {
       _logger.e('Error during password update: $e');
       emit(AuthErrorState(message: 'Password update failed: $e'));
+    }
+  }
+
+  /// Check auth status immediately
+  Future<void> _checkAuthStatus() async {
+    try {
+      if (_authRepository.isAuthenticated()) {
+        final user = _authRepository.getCurrentUser();
+        _logger.i('User is authenticated: ${user?.id}');
+        if (user != null) {
+          try {
+            final profile = await _profileRepository.get(user.id);
+            if (profile != null) {
+              _logger.i('Profile retrieved successfully, emitting authenticated state');
+              emit(AuthenticatedState(profile: profile));
+            } else {
+              _logger.w('Profile not found for authenticated user');
+              emit(UnauthenticatedState());
+            }
+          } catch (e) {
+            _logger.e('Error retrieving profile: $e');
+            emit(AuthErrorState(message: 'Error retrieving user profile: $e'));
+          }
+        } else {
+          _logger.w('No user even though isAuthenticated is true');
+          emit(UnauthenticatedState());
+        }
+      } else {
+        _logger.i('User is not authenticated');
+        emit(UnauthenticatedState());
+      }
+    } catch (e) {
+      _logger.e('Error checking auth status: $e');
+      emit(AuthErrorState(message: 'Authentication check failed: $e'));
     }
   }
 } 

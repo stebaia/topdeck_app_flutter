@@ -27,8 +27,11 @@ class _LoginPageState extends State<LoginPage> {
     if (authState is AuthenticatedState) {
       // Redirect to home on the next frame
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        print('User already authenticated, redirecting to home...');
         context.router.replaceNamed('/home');
       });
+    } else {
+      print('User not authenticated, staying on login page');
     }
   }
 
@@ -48,6 +51,14 @@ class _LoginPageState extends State<LoginPage> {
             ),
           );
     }
+  }
+  
+  void _onGoogleLoginPressed() {
+    context.read<AuthBloc>().add(SignInWithGoogleNativelyEvent());
+  }
+
+  void _onGoogleOAuthLoginPressed() {
+    context.read<AuthBloc>().add(SignInWithGoogleEvent());
   }
 
   void _onForgotPasswordPressed() {
@@ -95,7 +106,14 @@ class _LoginPageState extends State<LoginPage> {
             );
           } else if (state is AuthenticatedState) {
             // Navigate to home or dashboard
+            print('Authentication successful! Redirecting to home...');
             context.router.replaceNamed('/home');
+          } else if (state is UnauthenticatedState) {
+            // Log state change
+            print('User is unauthenticated, staying on login page');
+          } else if (state is AuthLoadingState) {
+            // Log loading state
+            print('Authentication in progress...');
           }
         },
         builder: (context, state) {
@@ -181,6 +199,42 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  // Google Sign In Button (Nativo)
+                  ElevatedButton.icon(
+                    onPressed: state is AuthLoadingState ? null : _onGoogleLoginPressed,
+                    icon: const Icon(Icons.g_mobiledata, size: 24),
+                    label: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12.0),
+                      child: state is AuthLoadingState
+                          ? Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.grey.shade700,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text('Caricamento...', style: TextStyle(fontSize: 16)),
+                              ],
+                            )
+                          : const Text(
+                              'Accedi con Google (Nativo)',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black87,
+                      side: BorderSide(color: Colors.grey.shade300),
+                    ),
+                  ),
                   TextButton(
                     onPressed: state is AuthLoadingState
                         ? null
@@ -200,6 +254,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ],
                   ),
+                  
                 ],
               ),
             ),

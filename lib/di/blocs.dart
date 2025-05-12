@@ -8,4 +8,11 @@ final List<BlocProvider> _blocs = [
       logger: context.read<Logger>(),
     )..add(CheckAuthStatusEvent()),
   ),
+  
+  // User search bloc
+  BlocProvider<UserSearchBloc>(
+    create: (context) => UserSearchBloc(
+      context.read<UserSearchRepository>(),
+    ),
+  ),
 ];

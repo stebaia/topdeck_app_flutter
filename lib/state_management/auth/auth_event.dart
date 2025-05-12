@@ -66,6 +66,12 @@ class SignInEvent extends AuthEvent {
   List<Object> get props => [email, password];
 }
 
+/// Event for Google sign in
+class SignInWithGoogleEvent extends AuthEvent {}
+
+/// Event for native Google sign in using google_sign_in
+class SignInWithGoogleNativelyEvent extends AuthEvent {}
+
 /// Event for user logout
 class SignOutEvent extends AuthEvent {}
 

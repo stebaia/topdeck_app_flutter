@@ -3,7 +3,7 @@ import 'package:topdeck_app_flutter/routers/app_router.gr.dart';
 import 'package:topdeck_app_flutter/routers/auth_guard.dart';
 
 @AutoRouterConfig(
-  replaceInRouteName: 'Page,Route',
+  replaceInRouteName: 'Page,Route,Tab',
 )
 class AppRouter extends RootStackRouter{
   
@@ -13,25 +13,26 @@ class AppRouter extends RootStackRouter{
   List<AutoRoute> get routes => [
     // Core route (initial route that handles authentication redirection)
     AutoRoute(
-      page: CoreRoute.page, 
+      page: CorePageRoute.page, 
       path: '/',
       initial: true,
     ),
     
     // Unauthenticated routes
-    AutoRoute(page: LoginRoute.page, path: '/login'),
-    AutoRoute(page: RegisterRoute.page, path: '/register'),
+    AutoRoute(page: LoginPageRoute.page, path: '/login'),
+    AutoRoute(page: RegisterPageRoute.page, path: '/register'),
     
     // Authenticated routes (protected by AuthGuard)
     AutoRoute(
-      page: HomeRoute.page, 
+      page: HomePageRoute.page, 
       path: '/home',
       guards: [AuthGuard()],
-    ),
-    AutoRoute(
-      page: ProfileRoute.page, 
-      path: '/profile',
-      guards: [AuthGuard()],
+      children: [
+        AutoRoute(page: HomeTabRoute.page, path: 'home'),
+        AutoRoute(page: TournamentsTabRoute.page, path: 'tournaments'),
+        AutoRoute(page: FriendsTabRoute.page, path: 'friends'),
+        AutoRoute(page: ProfileTabRoute.page, path: 'profile'),
+      ]
     ),
   ];
 }

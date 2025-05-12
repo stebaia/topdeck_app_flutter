@@ -23,6 +23,12 @@ abstract class AuthRepository {
     required String password,
   });
   
+  /// Sign in with Google OAuth
+  Future<bool> signInWithGoogle();
+  
+  /// Sign in with Google natively using google_sign_in
+  Future<AuthResponse> signInWithGoogleNatively();
+  
   /// Sign out the current user
   Future<void> signOut();
   
