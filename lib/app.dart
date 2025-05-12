@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:topdeck_app_flutter/l10n/app_localizations.dart';
 import 'package:topdeck_app_flutter/di/dependency_injector.dart';
 import 'package:topdeck_app_flutter/routers/app_router.dart';
 import 'package:topdeck_app_flutter/theme/light_theme.dart';

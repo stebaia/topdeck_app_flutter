@@ -14,5 +14,6 @@ final List<SingleChildWidget> _providers = [
     create: (_) => const FlutterSecureStorage(),
   ),
   
-  
+  // Add all Supabase repositories from ServiceLocator
+  ...ServiceLocator.getProviders(),
 ];
