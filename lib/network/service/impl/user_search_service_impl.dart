@@ -13,13 +13,13 @@ class UserSearchServiceImpl {
         return [];
       }
 
-      // Invece di inviare un URL completo, possiamo passare il nome della funzione
-      // e aggiungere un query parameter personalizzato che verrà usato nella URL
+      // Include the query parameter in the function name
       final functionName = 'search-users?query=${Uri.encodeComponent(query)}';
       
       final response = await client.functions.invoke(
         functionName,
         method: HttpMethod.get,
+        headers: {'Content-Type': 'application/json'},
       );
       
       if (response.status != 200) {

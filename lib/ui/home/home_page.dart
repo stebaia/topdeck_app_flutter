@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:topdeck_app_flutter/routers/app_router.gr.dart';
+import 'package:topdeck_app_flutter/ui/screens/match_wizard/format_selection_page.dart';
 
 @RoutePage()
 class HomePage extends StatefulWidget {
@@ -29,6 +30,14 @@ class _HomePageState extends State<HomePage> {
         final tabsRouter = AutoTabsRouter.of(context);
         return Scaffold(
           body: child,
+          floatingActionButton: FloatingActionButton.extended(
+            label: const Text('Crea partita'),
+            onPressed: () {
+              // Navigate to the first step of the match creation wizard
+              context.router.push(const FormatSelectionPageRoute());
+            },
+            icon: const Icon(CupertinoIcons.plus),
+          ),
           bottomNavigationBar: BottomNavigationBar(
             type: BottomNavigationBarType.fixed,
             selectedItemColor: Theme.of(context).primaryColor,

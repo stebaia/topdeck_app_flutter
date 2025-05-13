@@ -34,6 +34,28 @@ class AppRouter extends RootStackRouter{
         AutoRoute(page: ProfileTabRoute.page, path: 'profile'),
       ]
     ),
+    
+    // Match creation wizard routes
+    AutoRoute(
+      page: FormatSelectionPageRoute.page,
+      path: '/match-wizard/format',
+      guards: [AuthGuard()],
+    ),
+    AutoRoute(
+      page: DeckSelectionPageRoute.page,
+      path: '/match-wizard/deck',
+      guards: [AuthGuard()],
+    ),
+    AutoRoute(
+      page: OpponentSearchPageRoute.page,
+      path: '/match-wizard/opponent',
+      guards: [AuthGuard()],
+    ),
+    AutoRoute(
+      page: MatchResultsPageRoute.page,
+      path: '/match-wizard/results',
+      guards: [AuthGuard()],
+    ),
   ];
 }
 

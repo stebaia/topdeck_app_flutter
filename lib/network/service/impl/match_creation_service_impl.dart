@@ -31,4 +31,39 @@ class MatchCreationServiceImpl {
       throw Exception('Failed to create match: $e');
     }
   }
+
+  /// Records a match result using the smooth-processor edge function
+  Future<Map<String, dynamic>> recordMatchResult({
+    required String player1Id,
+    required String player2Id,
+    required String player1DeckId,
+    required String player2DeckId,
+    required String format,
+    required String winnerId,
+  }) async {
+    try {
+      final response = await client.functions.invoke(
+        'smooth-processor',
+        body: {
+          'player1_id': player1Id,
+          'player2_id': player2Id,
+          'player1_deck': player1DeckId,
+          'player2_deck': player2DeckId,
+          'format': format,
+          'winner_id': winnerId,
+        },
+      );
+      
+      if (response.status != 200) {
+        throw Exception(response.data['error'] ?? 'Failed to record match result');
+      }
+      
+      return {
+        'message': response.data['message'] ?? 'Match recorded successfully',
+        'match_id': response.data['match_id'],
+      };
+    } catch (e) {
+      throw Exception('Failed to record match result: $e');
+    }
+  }
 } 
