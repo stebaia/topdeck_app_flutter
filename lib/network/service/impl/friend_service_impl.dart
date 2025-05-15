@@ -11,9 +11,27 @@ class FriendServiceImpl extends BaseServiceImpl {
   Future<Map<String, dynamic>> sendFriendRequest(String recipientId) async {
     try {
       print('Invoking edge function send-friend-request with recipient_id: $recipientId');
+      
+      // Ottieni la sessione corrente per avere il token di accesso
+      final session = await supabase.auth.currentSession;
+      
+      if (session == null || session.accessToken.isEmpty) {
+        print('No valid session found, cannot authenticate with Edge Function');
+        throw Exception('User not authenticated or session expired');
+      }
+      
+      // Configura l'header di autorizzazione
+      final headers = {
+        'Authorization': 'Bearer ${session.accessToken}',
+        'Content-Type': 'application/json'
+      };
+      
+      print('Using access token for authorization (first 10 chars): ${session.accessToken.substring(0, 10)}...');
+      
       final response = await supabase.functions.invoke(
         'send-friend-request',
         body: {'recipient_id': recipientId},
+        headers: headers,
       );
       
       print('Edge function response status: ${response.status}');
@@ -34,9 +52,27 @@ class FriendServiceImpl extends BaseServiceImpl {
   Future<Map<String, dynamic>> acceptFriendRequest(String friendId) async {
     try {
       print('Invoking edge function accept-friend-request with friendId: $friendId');
+      
+      // Ottieni la sessione corrente per avere il token di accesso
+      final session = await supabase.auth.currentSession;
+      
+      if (session == null || session.accessToken.isEmpty) {
+        print('No valid session found, cannot authenticate with Edge Function');
+        throw Exception('User not authenticated or session expired');
+      }
+      
+      // Configura l'header di autorizzazione
+      final headers = {
+        'Authorization': 'Bearer ${session.accessToken}',
+        'Content-Type': 'application/json'
+      };
+      
+      print('Using access token for authorization (first 10 chars): ${session.accessToken.substring(0, 10)}...');
+      
       final response = await supabase.functions.invoke(
         'accept-friend-request',
         body: {'friendId': friendId},
+        headers: headers,
       );
       
       print('Edge function response status: ${response.status}');
