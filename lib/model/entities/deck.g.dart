@@ -6,17 +6,6 @@ part of 'deck.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-Deck _$DeckFromJson(Map<String, dynamic> json) => Deck(
-      id: json['id'] as String,
-      userId: json['user_id'] as String,
-      name: json['name'] as String,
-      format: $enumDecode(_$DeckFormatEnumMap, json['format']),
-      shared: json['shared'] as bool? ?? false,
-      createdAt: json['created_at'] == null
-          ? null
-          : DateTime.parse(json['created_at'] as String),
-    );
-
 Map<String, dynamic> _$DeckToJson(Deck instance) => <String, dynamic>{
       'id': instance.id,
       'user_id': instance.userId,

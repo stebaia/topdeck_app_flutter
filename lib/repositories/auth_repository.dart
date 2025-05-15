@@ -16,6 +16,8 @@ abstract class AuthRepository {
     required String stato,
     String? avatarUrl,
   });
+
+  
   
   /// Sign in with email and password
   Future<AuthResponse> signIn({

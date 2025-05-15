@@ -49,4 +49,22 @@ class PasswordResetSentState extends AuthState {
 }
 
 /// Password updated state
-class PasswordUpdatedState extends AuthState {} 
+class PasswordUpdatedState extends AuthState {}
+
+/// Stato per utente autenticato con Google ma senza profilo
+class GoogleAuthenticatedNeedsProfileState extends AuthState {
+  final String userId;
+  final String email;
+  final String? name;
+  final String? avatarUrl;
+
+  const GoogleAuthenticatedNeedsProfileState({
+    required this.userId,
+    required this.email,
+    this.name,
+    this.avatarUrl,
+  });
+
+  @override
+  List<Object?> get props => [userId, email, name, avatarUrl];
+} 

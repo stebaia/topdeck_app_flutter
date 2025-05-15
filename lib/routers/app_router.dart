@@ -21,6 +21,7 @@ class AppRouter extends RootStackRouter{
     // Unauthenticated routes
     AutoRoute(page: LoginPageRoute.page, path: '/login'),
     AutoRoute(page: RegisterPageRoute.page, path: '/register'),
+    AutoRoute(page: CompleteGoogleProfilePageRoute.page, path: '/complete-google-profile'),
     
     // Authenticated routes (protected by AuthGuard)
     AutoRoute(
@@ -33,6 +34,13 @@ class AppRouter extends RootStackRouter{
         AutoRoute(page: FriendsTabRoute.page, path: 'friends'),
         AutoRoute(page: ProfileTabRoute.page, path: 'profile'),
       ]
+    ),
+    
+    // Decks page
+    AutoRoute(
+      page: DecksPageRoute.page,
+      path: '/decks',
+      guards: [AuthGuard()],
     ),
     
     // Match creation wizard routes
@@ -54,6 +62,13 @@ class AppRouter extends RootStackRouter{
     AutoRoute(
       page: MatchResultsPageRoute.page,
       path: '/match-wizard/results',
+      guards: [AuthGuard()],
+    ),
+    
+    // User profile page
+    AutoRoute(
+      page: UserProfilePageRoute.page,
+      path: '/user/:userId',
       guards: [AuthGuard()],
     ),
   ];

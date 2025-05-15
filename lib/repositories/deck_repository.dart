@@ -14,4 +14,7 @@ abstract class DeckRepository extends BaseRepository<Deck> {
   
   /// Updates the shared status of a deck
   Future<Deck> updateSharedStatus(String id, bool shared);
+  
+  /// Gets public decks for a specific user
+  Future<List<Deck>> getPublicDecksByUser(String userId);
 } 

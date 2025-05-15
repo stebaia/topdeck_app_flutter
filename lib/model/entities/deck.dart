@@ -19,7 +19,7 @@ enum DeckFormat {
 }
 
 /// Deck model representing a deck in the Supabase decks table
-@JsonSerializable()
+@JsonSerializable(createFactory: false)
 class Deck extends BaseModel {
   /// The user ID who owns this deck
   @JsonKey(name: 'user_id')
@@ -65,8 +65,36 @@ class Deck extends BaseModel {
     );
   }
 
-  /// Creates a deck from JSON
-  factory Deck.fromJson(Map<String, dynamic> json) => _$DeckFromJson(json);
+  /// Creates a deck from JSON with null safety
+  factory Deck.fromJson(Map<String, dynamic> json) {
+    // Gestisci format=null o formati non validi usando advanced come predefinito
+    DeckFormat format;
+    try {
+      if (json['format'] == null) {
+        format = DeckFormat.advanced;
+        print('Warning: format is null in deck, using default: advanced');
+      } else {
+        format = $enumDecode(_$DeckFormatEnumMap, json['format']);
+      }
+    } catch (e) {
+      format = DeckFormat.advanced;
+      print('Error decoding format: ${json['format']}, using default: advanced');
+    }
+    
+    // Assicurati che l'ID non sia mai null
+    String id = json['id'] as String? ?? const Uuid().v4();
+    
+    return Deck(
+      id: id,
+      userId: json['user_id'] as String? ?? '',
+      name: json['name'] as String? ?? 'Unnamed Deck',
+      format: format,
+      shared: json['shared'] as bool? ?? false,
+      createdAt: json['created_at'] == null
+          ? null
+          : DateTime.parse(json['created_at'] as String),
+    );
+  }
 
   @override
   Map<String, dynamic> toJson() => _$DeckToJson(this);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:auto_route/auto_route.dart';
+import 'package:topdeck_app_flutter/routers/app_router.gr.dart';
 import 'package:topdeck_app_flutter/state_management/auth/auth_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/auth/auth_event.dart';
 import 'package:topdeck_app_flutter/state_management/auth/auth_state.dart';
@@ -108,6 +109,17 @@ class _LoginPageState extends State<LoginPage> {
             // Navigate to home or dashboard
             print('Authentication successful! Redirecting to home...');
             context.router.replaceNamed('/home');
+          } else if (state is GoogleAuthenticatedNeedsProfileState) {
+            // Naviga alla pagina di completamento profilo
+            print('Google authentication successful, redirecting to profile completion page...');
+            context.router.navigate(
+              CompleteGoogleProfilePageRoute(
+                userId: state.userId,
+                email: state.email,
+                name: state.name,
+                avatarUrl: state.avatarUrl,
+              ),
+            );
           } else if (state is UnauthenticatedState) {
             // Log state change
             print('User is unauthenticated, staying on login page');

@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:auto_route/auto_route.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:topdeck_app_flutter/model/entities/deck.dart';
+import 'package:topdeck_app_flutter/network/supabase_config.dart';
 import 'package:topdeck_app_flutter/routers/app_router.gr.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/match_wizard/match_wizard_bloc.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/match_wizard/match_wizard_event.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/match_wizard/match_wizard_state.dart';
 
 @RoutePage()
-class DeckSelectionPage extends StatelessWidget {
+class DeckSelectionPage extends StatefulWidget {
   final DeckFormat format;
   
   const DeckSelectionPage({
@@ -13,78 +18,160 @@ class DeckSelectionPage extends StatelessWidget {
   });
 
   @override
+  State<DeckSelectionPage> createState() => _DeckSelectionPageState();
+}
+
+class _DeckSelectionPageState extends State<DeckSelectionPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Verifichiamo che l'utente sia autenticato prima di caricare i mazzi
+    final currentUser = supabase.auth.currentUser;
+    if (currentUser != null) {
+      // Carica i mazzi quando la pagina viene inizializzata
+      context.read<MatchWizardBloc>().add(LoadUserDecksByFormatEvent(widget.format));
+    }
+  }
+  
+  @override
   Widget build(BuildContext context) {
+    // Ottieni l'utente corrente
+    final currentUser = supabase.auth.currentUser;
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Seleziona deck'),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Seleziona il tuo deck per formato ${_formatToDisplayName(format)}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            // In a real implementation, this would load decks from a repository
-            // For now, we'll use a placeholder
-            Expanded(
-              child: FutureBuilder<List<Deck>>(
-                future: Future.value(_getMockDecks(format)),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
+      body: currentUser == null 
+          ? _buildUnauthenticatedView()
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Seleziona il tuo deck per formato ${_formatToDisplayName(widget.format)}',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
                   
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Text('Errore: ${snapshot.error}'),
-                    );
-                  }
-                  
-                  final decks = snapshot.data ?? [];
-                  
-                  if (decks.isEmpty) {
-                    return const Center(
-                      child: Text('Nessun deck trovato per questo formato'),
-                    );
-                  }
-                  
-                  return ListView.builder(
-                    itemCount: decks.length,
-                    itemBuilder: (context, index) {
-                      final deck = decks[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: ListTile(
-                          title: Text(
-                            deck.name,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Text('Creato il ${_formatDate(deck.createdAt)}'),
-                          trailing: const Icon(Icons.arrow_forward_ios),
-                          onTap: () {
-                            context.router.push(
-                              OpponentSearchPageRoute(
-                                format: format,
-                                selectedDeckId: deck.id,
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  );
-                },
+                  Expanded(
+                    child: BlocConsumer<MatchWizardBloc, MatchWizardState>(
+                      listener: (context, state) {
+                        if (state is MatchWizardErrorState) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(state.errorMessage),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                      builder: (context, state) {
+                        if (state is MatchWizardLoadingState) {
+                          return const Center(child: CircularProgressIndicator());
+                        } else if (state is UserDecksLoadedState && state.format == widget.format) {
+                          return _buildDecksList(state.decks);
+                        } else if (state is MatchWizardErrorState) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Errore: ${state.errorMessage}',
+                                  style: TextStyle(color: Colors.red[700]),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    context.read<MatchWizardBloc>().add(
+                                      LoadUserDecksByFormatEvent(widget.format)
+                                    );
+                                  },
+                                  child: const Text('Riprova'),
+                                ),
+                              ],
+                            ),
+                          );
+                        } else {
+                          // Se lo stato non è quello che ci aspettiamo, richiedi i dati
+                          return const Center(child: Text('Caricamento mazzi...'));
+                        }
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+    );
+  }
+  
+  Widget _buildUnauthenticatedView() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.lock,
+            size: 64,
+            color: Colors.grey,
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Devi essere autenticato per visualizzare i mazzi',
+            style: TextStyle(fontSize: 16),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () {
+              // Normalmente qui si farebbe il redirect alla pagina di login
+              context.router.popUntilRoot();
+            },
+            child: const Text('Torna alla Home'),
+          ),
+        ],
       ),
+    );
+  }
+  
+  Widget _buildDecksList(List<Deck> decks) {
+    if (decks.isEmpty) {
+      return const Center(
+        child: Text(
+          'Nessun mazzo trovato per questo formato',
+          style: TextStyle(fontSize: 16),
+        ),
+      );
+    }
+    
+    return ListView.builder(
+      itemCount: decks.length,
+      itemBuilder: (context, index) {
+        final deck = decks[index];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          child: ListTile(
+            title: Text(
+              deck.name,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text('Creato il ${_formatDate(deck.createdAt)}'),
+            trailing: const Icon(Icons.arrow_forward_ios),
+            onTap: () {
+              context.router.push(
+                OpponentSearchPageRoute(
+                  format: widget.format,
+                  selectedDeckId: deck.id,
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
   
@@ -106,32 +193,5 @@ class DeckSelectionPage extends StatelessWidget {
   String _formatDate(DateTime? date) {
     if (date == null) return 'N/A';
     return '${date.day}/${date.month}/${date.year}';
-  }
-  
-  // Mock data for demonstration
-  List<Deck> _getMockDecks(DeckFormat format) {
-    return [
-      Deck(
-        id: '1',
-        userId: 'current-user',
-        name: 'Dragon Link',
-        format: format,
-        createdAt: DateTime.now().subtract(const Duration(days: 10)),
-      ),
-      Deck(
-        id: '2',
-        userId: 'current-user',
-        name: 'Eldlich',
-        format: format,
-        createdAt: DateTime.now().subtract(const Duration(days: 5)),
-      ),
-      Deck(
-        id: '3',
-        userId: 'current-user',
-        name: 'Sky Striker',
-        format: format,
-        createdAt: DateTime.now().subtract(const Duration(days: 2)),
-      ),
-    ];
   }
 } 

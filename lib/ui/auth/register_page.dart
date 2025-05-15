@@ -97,6 +97,10 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
+  void _onRegisterWithGooglePressed() {
+    context.read<AuthBloc>().add(SignInWithGoogleNativelyEvent());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -377,6 +381,31 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                     ),
                   ),
+                  const SizedBox(height: 24),
+                  
+                  // Google registration button
+                  const Text(
+                    'Oppure',
+                    style: TextStyle(
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: state is AuthLoadingState 
+                        ? null 
+                        : _onRegisterWithGooglePressed,
+                    icon: const Icon(Icons.g_mobiledata, size: 24),
+                    label: const Text('Registrati con Google'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12.0),
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black87,
+                      side: BorderSide(color: Colors.grey.shade300),
+                    ),
+                  ),
+                  
                   const SizedBox(height: 24),
                 ],
               ),

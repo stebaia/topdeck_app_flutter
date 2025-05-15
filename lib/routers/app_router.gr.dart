@@ -9,51 +9,120 @@
 // coverage:ignore-file
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'package:auto_route/auto_route.dart' as _i14;
-import 'package:flutter/material.dart' as _i15;
-import 'package:topdeck_app_flutter/model/entities/deck.dart' as _i16;
-import 'package:topdeck_app_flutter/ui/auth/login_page.dart' as _i7;
-import 'package:topdeck_app_flutter/ui/auth/profile_page.dart' as _i10;
-import 'package:topdeck_app_flutter/ui/auth/register_page.dart' as _i12;
-import 'package:topdeck_app_flutter/ui/core/core_page.dart' as _i1;
-import 'package:topdeck_app_flutter/ui/home/home_page.dart' as _i5;
-import 'package:topdeck_app_flutter/ui/home/tabs/friends_tab.dart' as _i4;
-import 'package:topdeck_app_flutter/ui/home/tabs/home_tab.dart' as _i6;
-import 'package:topdeck_app_flutter/ui/home/tabs/profile_tab.dart' as _i11;
-import 'package:topdeck_app_flutter/ui/home/tabs/tournaments_tab.dart' as _i13;
+import 'package:auto_route/auto_route.dart' as _i16;
+import 'package:flutter/material.dart' as _i17;
+import 'package:topdeck_app_flutter/model/entities/deck.dart' as _i18;
+import 'package:topdeck_app_flutter/ui/auth/complete_google_profile_page.dart'
+    as _i1;
+import 'package:topdeck_app_flutter/ui/auth/login_page.dart' as _i9;
+import 'package:topdeck_app_flutter/ui/auth/register_page.dart' as _i13;
+import 'package:topdeck_app_flutter/ui/core/core_page.dart' as _i2;
+import 'package:topdeck_app_flutter/ui/decks/decks_page.dart' as _i4;
+import 'package:topdeck_app_flutter/ui/home/home_page.dart' as _i7;
+import 'package:topdeck_app_flutter/ui/home/tabs/friends_tab.dart' as _i6;
+import 'package:topdeck_app_flutter/ui/home/tabs/home_tab.dart' as _i8;
+import 'package:topdeck_app_flutter/ui/home/tabs/profile_tab.dart' as _i12;
+import 'package:topdeck_app_flutter/ui/home/tabs/tournaments_tab.dart' as _i14;
 import 'package:topdeck_app_flutter/ui/screens/match_wizard/deck_selection_page.dart'
-    as _i2;
-import 'package:topdeck_app_flutter/ui/screens/match_wizard/format_selection_page.dart'
     as _i3;
+import 'package:topdeck_app_flutter/ui/screens/match_wizard/format_selection_page.dart'
+    as _i5;
 import 'package:topdeck_app_flutter/ui/screens/match_wizard/match_results_page.dart'
-    as _i8;
+    as _i10;
 import 'package:topdeck_app_flutter/ui/screens/match_wizard/opponent_search_page.dart'
-    as _i9;
+    as _i11;
+import 'package:topdeck_app_flutter/ui/user_profile/user_profile_page.dart'
+    as _i15;
 
 /// generated route for
-/// [_i1.CorePage]
-class CorePageRoute extends _i14.PageRouteInfo<void> {
-  const CorePageRoute({List<_i14.PageRouteInfo>? children})
+/// [_i1.CompleteGoogleProfilePage]
+class CompleteGoogleProfilePageRoute
+    extends _i16.PageRouteInfo<CompleteGoogleProfilePageRouteArgs> {
+  CompleteGoogleProfilePageRoute({
+    _i17.Key? key,
+    required String userId,
+    required String email,
+    String? name,
+    String? avatarUrl,
+    List<_i16.PageRouteInfo>? children,
+  }) : super(
+         CompleteGoogleProfilePageRoute.name,
+         args: CompleteGoogleProfilePageRouteArgs(
+           key: key,
+           userId: userId,
+           email: email,
+           name: name,
+           avatarUrl: avatarUrl,
+         ),
+         initialChildren: children,
+       );
+
+  static const String name = 'CompleteGoogleProfilePageRoute';
+
+  static _i16.PageInfo page = _i16.PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<CompleteGoogleProfilePageRouteArgs>();
+      return _i1.CompleteGoogleProfilePage(
+        key: args.key,
+        userId: args.userId,
+        email: args.email,
+        name: args.name,
+        avatarUrl: args.avatarUrl,
+      );
+    },
+  );
+}
+
+class CompleteGoogleProfilePageRouteArgs {
+  const CompleteGoogleProfilePageRouteArgs({
+    this.key,
+    required this.userId,
+    required this.email,
+    this.name,
+    this.avatarUrl,
+  });
+
+  final _i17.Key? key;
+
+  final String userId;
+
+  final String email;
+
+  final String? name;
+
+  final String? avatarUrl;
+
+  @override
+  String toString() {
+    return 'CompleteGoogleProfilePageRouteArgs{key: $key, userId: $userId, email: $email, name: $name, avatarUrl: $avatarUrl}';
+  }
+}
+
+/// generated route for
+/// [_i2.CorePage]
+class CorePageRoute extends _i16.PageRouteInfo<void> {
+  const CorePageRoute({List<_i16.PageRouteInfo>? children})
     : super(CorePageRoute.name, initialChildren: children);
 
   static const String name = 'CorePageRoute';
 
-  static _i14.PageInfo page = _i14.PageInfo(
+  static _i16.PageInfo page = _i16.PageInfo(
     name,
     builder: (data) {
-      return const _i1.CorePage();
+      return const _i2.CorePage();
     },
   );
 }
 
 /// generated route for
-/// [_i2.DeckSelectionPage]
+/// [_i3.DeckSelectionPage]
 class DeckSelectionPageRoute
-    extends _i14.PageRouteInfo<DeckSelectionPageRouteArgs> {
+    extends _i16.PageRouteInfo<DeckSelectionPageRouteArgs> {
   DeckSelectionPageRoute({
-    _i15.Key? key,
-    required _i16.DeckFormat format,
-    List<_i14.PageRouteInfo>? children,
+    _i17.Key? key,
+    required _i18.DeckFormat format,
+    List<_i16.PageRouteInfo>? children,
   }) : super(
          DeckSelectionPageRoute.name,
          args: DeckSelectionPageRouteArgs(key: key, format: format),
@@ -62,11 +131,11 @@ class DeckSelectionPageRoute
 
   static const String name = 'DeckSelectionPageRoute';
 
-  static _i14.PageInfo page = _i14.PageInfo(
+  static _i16.PageInfo page = _i16.PageInfo(
     name,
     builder: (data) {
       final args = data.argsAs<DeckSelectionPageRouteArgs>();
-      return _i2.DeckSelectionPage(key: args.key, format: args.format);
+      return _i3.DeckSelectionPage(key: args.key, format: args.format);
     },
   );
 }
@@ -74,9 +143,9 @@ class DeckSelectionPageRoute
 class DeckSelectionPageRouteArgs {
   const DeckSelectionPageRouteArgs({this.key, required this.format});
 
-  final _i15.Key? key;
+  final _i17.Key? key;
 
-  final _i16.DeckFormat format;
+  final _i18.DeckFormat format;
 
   @override
   String toString() {
@@ -85,95 +154,111 @@ class DeckSelectionPageRouteArgs {
 }
 
 /// generated route for
-/// [_i3.FormatSelectionPage]
-class FormatSelectionPageRoute extends _i14.PageRouteInfo<void> {
-  const FormatSelectionPageRoute({List<_i14.PageRouteInfo>? children})
+/// [_i4.DecksPage]
+class DecksPageRoute extends _i16.PageRouteInfo<void> {
+  const DecksPageRoute({List<_i16.PageRouteInfo>? children})
+    : super(DecksPageRoute.name, initialChildren: children);
+
+  static const String name = 'DecksPageRoute';
+
+  static _i16.PageInfo page = _i16.PageInfo(
+    name,
+    builder: (data) {
+      return const _i4.DecksPage();
+    },
+  );
+}
+
+/// generated route for
+/// [_i5.FormatSelectionPage]
+class FormatSelectionPageRoute extends _i16.PageRouteInfo<void> {
+  const FormatSelectionPageRoute({List<_i16.PageRouteInfo>? children})
     : super(FormatSelectionPageRoute.name, initialChildren: children);
 
   static const String name = 'FormatSelectionPageRoute';
 
-  static _i14.PageInfo page = _i14.PageInfo(
+  static _i16.PageInfo page = _i16.PageInfo(
     name,
     builder: (data) {
-      return const _i3.FormatSelectionPage();
+      return const _i5.FormatSelectionPage();
     },
   );
 }
 
 /// generated route for
-/// [_i4.FriendsTab]
-class FriendsTabRoute extends _i14.PageRouteInfo<void> {
-  const FriendsTabRoute({List<_i14.PageRouteInfo>? children})
+/// [_i6.FriendsTab]
+class FriendsTabRoute extends _i16.PageRouteInfo<void> {
+  const FriendsTabRoute({List<_i16.PageRouteInfo>? children})
     : super(FriendsTabRoute.name, initialChildren: children);
 
   static const String name = 'FriendsTabRoute';
 
-  static _i14.PageInfo page = _i14.PageInfo(
+  static _i16.PageInfo page = _i16.PageInfo(
     name,
     builder: (data) {
-      return const _i4.FriendsTab();
+      return const _i6.FriendsTab();
     },
   );
 }
 
 /// generated route for
-/// [_i5.HomePage]
-class HomePageRoute extends _i14.PageRouteInfo<void> {
-  const HomePageRoute({List<_i14.PageRouteInfo>? children})
+/// [_i7.HomePage]
+class HomePageRoute extends _i16.PageRouteInfo<void> {
+  const HomePageRoute({List<_i16.PageRouteInfo>? children})
     : super(HomePageRoute.name, initialChildren: children);
 
   static const String name = 'HomePageRoute';
 
-  static _i14.PageInfo page = _i14.PageInfo(
+  static _i16.PageInfo page = _i16.PageInfo(
     name,
     builder: (data) {
-      return const _i5.HomePage();
+      return const _i7.HomePage();
     },
   );
 }
 
 /// generated route for
-/// [_i6.HomeTab]
-class HomeTabRoute extends _i14.PageRouteInfo<void> {
-  const HomeTabRoute({List<_i14.PageRouteInfo>? children})
+/// [_i8.HomeTab]
+class HomeTabRoute extends _i16.PageRouteInfo<void> {
+  const HomeTabRoute({List<_i16.PageRouteInfo>? children})
     : super(HomeTabRoute.name, initialChildren: children);
 
   static const String name = 'HomeTabRoute';
 
-  static _i14.PageInfo page = _i14.PageInfo(
+  static _i16.PageInfo page = _i16.PageInfo(
     name,
     builder: (data) {
-      return const _i6.HomeTab();
+      return const _i8.HomeTab();
     },
   );
 }
 
 /// generated route for
-/// [_i7.LoginPage]
-class LoginPageRoute extends _i14.PageRouteInfo<void> {
-  const LoginPageRoute({List<_i14.PageRouteInfo>? children})
+/// [_i9.LoginPage]
+class LoginPageRoute extends _i16.PageRouteInfo<void> {
+  const LoginPageRoute({List<_i16.PageRouteInfo>? children})
     : super(LoginPageRoute.name, initialChildren: children);
 
   static const String name = 'LoginPageRoute';
 
-  static _i14.PageInfo page = _i14.PageInfo(
+  static _i16.PageInfo page = _i16.PageInfo(
     name,
     builder: (data) {
-      return const _i7.LoginPage();
+      return const _i9.LoginPage();
     },
   );
 }
 
 /// generated route for
-/// [_i8.MatchResultsPage]
+/// [_i10.MatchResultsPage]
 class MatchResultsPageRoute
-    extends _i14.PageRouteInfo<MatchResultsPageRouteArgs> {
+    extends _i16.PageRouteInfo<MatchResultsPageRouteArgs> {
   MatchResultsPageRoute({
-    _i15.Key? key,
-    required _i16.DeckFormat format,
+    _i17.Key? key,
+    required _i18.DeckFormat format,
     required String playerDeckId,
     required String opponentId,
-    List<_i14.PageRouteInfo>? children,
+    List<_i16.PageRouteInfo>? children,
   }) : super(
          MatchResultsPageRoute.name,
          args: MatchResultsPageRouteArgs(
@@ -187,11 +272,11 @@ class MatchResultsPageRoute
 
   static const String name = 'MatchResultsPageRoute';
 
-  static _i14.PageInfo page = _i14.PageInfo(
+  static _i16.PageInfo page = _i16.PageInfo(
     name,
     builder: (data) {
       final args = data.argsAs<MatchResultsPageRouteArgs>();
-      return _i8.MatchResultsPage(
+      return _i10.MatchResultsPage(
         key: args.key,
         format: args.format,
         playerDeckId: args.playerDeckId,
@@ -209,9 +294,9 @@ class MatchResultsPageRouteArgs {
     required this.opponentId,
   });
 
-  final _i15.Key? key;
+  final _i17.Key? key;
 
-  final _i16.DeckFormat format;
+  final _i18.DeckFormat format;
 
   final String playerDeckId;
 
@@ -224,14 +309,14 @@ class MatchResultsPageRouteArgs {
 }
 
 /// generated route for
-/// [_i9.OpponentSearchPage]
+/// [_i11.OpponentSearchPage]
 class OpponentSearchPageRoute
-    extends _i14.PageRouteInfo<OpponentSearchPageRouteArgs> {
+    extends _i16.PageRouteInfo<OpponentSearchPageRouteArgs> {
   OpponentSearchPageRoute({
-    _i15.Key? key,
-    required _i16.DeckFormat format,
+    _i17.Key? key,
+    required _i18.DeckFormat format,
     required String selectedDeckId,
-    List<_i14.PageRouteInfo>? children,
+    List<_i16.PageRouteInfo>? children,
   }) : super(
          OpponentSearchPageRoute.name,
          args: OpponentSearchPageRouteArgs(
@@ -244,11 +329,11 @@ class OpponentSearchPageRoute
 
   static const String name = 'OpponentSearchPageRoute';
 
-  static _i14.PageInfo page = _i14.PageInfo(
+  static _i16.PageInfo page = _i16.PageInfo(
     name,
     builder: (data) {
       final args = data.argsAs<OpponentSearchPageRouteArgs>();
-      return _i9.OpponentSearchPage(
+      return _i11.OpponentSearchPage(
         key: args.key,
         format: args.format,
         selectedDeckId: args.selectedDeckId,
@@ -264,9 +349,9 @@ class OpponentSearchPageRouteArgs {
     required this.selectedDeckId,
   });
 
-  final _i15.Key? key;
+  final _i17.Key? key;
 
-  final _i16.DeckFormat format;
+  final _i18.DeckFormat format;
 
   final String selectedDeckId;
 
@@ -277,65 +362,114 @@ class OpponentSearchPageRouteArgs {
 }
 
 /// generated route for
-/// [_i10.ProfilePage]
-class ProfilePageRoute extends _i14.PageRouteInfo<void> {
-  const ProfilePageRoute({List<_i14.PageRouteInfo>? children})
-    : super(ProfilePageRoute.name, initialChildren: children);
-
-  static const String name = 'ProfilePageRoute';
-
-  static _i14.PageInfo page = _i14.PageInfo(
-    name,
-    builder: (data) {
-      return const _i10.ProfilePage();
-    },
-  );
-}
-
-/// generated route for
-/// [_i11.ProfileTab]
-class ProfileTabRoute extends _i14.PageRouteInfo<void> {
-  const ProfileTabRoute({List<_i14.PageRouteInfo>? children})
+/// [_i12.ProfileTab]
+class ProfileTabRoute extends _i16.PageRouteInfo<void> {
+  const ProfileTabRoute({List<_i16.PageRouteInfo>? children})
     : super(ProfileTabRoute.name, initialChildren: children);
 
   static const String name = 'ProfileTabRoute';
 
-  static _i14.PageInfo page = _i14.PageInfo(
+  static _i16.PageInfo page = _i16.PageInfo(
     name,
     builder: (data) {
-      return const _i11.ProfileTab();
+      return const _i12.ProfileTab();
     },
   );
 }
 
 /// generated route for
-/// [_i12.RegisterPage]
-class RegisterPageRoute extends _i14.PageRouteInfo<void> {
-  const RegisterPageRoute({List<_i14.PageRouteInfo>? children})
+/// [_i13.RegisterPage]
+class RegisterPageRoute extends _i16.PageRouteInfo<void> {
+  const RegisterPageRoute({List<_i16.PageRouteInfo>? children})
     : super(RegisterPageRoute.name, initialChildren: children);
 
   static const String name = 'RegisterPageRoute';
 
-  static _i14.PageInfo page = _i14.PageInfo(
+  static _i16.PageInfo page = _i16.PageInfo(
     name,
     builder: (data) {
-      return const _i12.RegisterPage();
+      return const _i13.RegisterPage();
     },
   );
 }
 
 /// generated route for
-/// [_i13.TournamentsTab]
-class TournamentsTabRoute extends _i14.PageRouteInfo<void> {
-  const TournamentsTabRoute({List<_i14.PageRouteInfo>? children})
+/// [_i14.TournamentsTab]
+class TournamentsTabRoute extends _i16.PageRouteInfo<void> {
+  const TournamentsTabRoute({List<_i16.PageRouteInfo>? children})
     : super(TournamentsTabRoute.name, initialChildren: children);
 
   static const String name = 'TournamentsTabRoute';
 
-  static _i14.PageInfo page = _i14.PageInfo(
+  static _i16.PageInfo page = _i16.PageInfo(
     name,
     builder: (data) {
-      return const _i13.TournamentsTab();
+      return const _i14.TournamentsTab();
     },
   );
+}
+
+/// generated route for
+/// [_i15.UserProfilePage]
+class UserProfilePageRoute
+    extends _i16.PageRouteInfo<UserProfilePageRouteArgs> {
+  UserProfilePageRoute({
+    _i17.Key? key,
+    required String userId,
+    required String username,
+    String? avatarUrl,
+    String? displayName,
+    List<_i16.PageRouteInfo>? children,
+  }) : super(
+         UserProfilePageRoute.name,
+         args: UserProfilePageRouteArgs(
+           key: key,
+           userId: userId,
+           username: username,
+           avatarUrl: avatarUrl,
+           displayName: displayName,
+         ),
+         initialChildren: children,
+       );
+
+  static const String name = 'UserProfilePageRoute';
+
+  static _i16.PageInfo page = _i16.PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<UserProfilePageRouteArgs>();
+      return _i15.UserProfilePage(
+        key: args.key,
+        userId: args.userId,
+        username: args.username,
+        avatarUrl: args.avatarUrl,
+        displayName: args.displayName,
+      );
+    },
+  );
+}
+
+class UserProfilePageRouteArgs {
+  const UserProfilePageRouteArgs({
+    this.key,
+    required this.userId,
+    required this.username,
+    this.avatarUrl,
+    this.displayName,
+  });
+
+  final _i17.Key? key;
+
+  final String userId;
+
+  final String username;
+
+  final String? avatarUrl;
+
+  final String? displayName;
+
+  @override
+  String toString() {
+    return 'UserProfilePageRouteArgs{key: $key, userId: $userId, username: $username, avatarUrl: $avatarUrl, displayName: $displayName}';
+  }
 }

@@ -72,6 +72,49 @@ class SignInWithGoogleEvent extends AuthEvent {}
 /// Event for native Google sign in using google_sign_in
 class SignInWithGoogleNativelyEvent extends AuthEvent {}
 
+/// Event for registering with Google natively
+class RegisterWithGoogleEvent extends AuthEvent {
+  const RegisterWithGoogleEvent();
+
+  @override
+  List<Object> get props => [];
+}
+
+/// Event per completare il profilo dopo autenticazione con Google
+class CompleteGoogleProfileEvent extends AuthEvent {
+  final String userId;
+  final String username;
+  final String nome;
+  final String cognome;
+  final DateTime dataDiNascita;
+  final String citta;
+  final String provincia;
+  final String stato;
+
+  const CompleteGoogleProfileEvent({
+    required this.userId,
+    required this.username,
+    required this.nome,
+    required this.cognome,
+    required this.dataDiNascita,
+    required this.citta,
+    required this.provincia,
+    required this.stato,
+  });
+
+  @override
+  List<Object> get props => [
+    userId,
+    username,
+    nome,
+    cognome,
+    dataDiNascita,
+    citta,
+    provincia,
+    stato,
+  ];
+}
+
 /// Event for user logout
 class SignOutEvent extends AuthEvent {}
 

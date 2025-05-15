@@ -5,15 +5,19 @@ import 'package:topdeck_app_flutter/network/supabase_config.dart';
 /// Service implementation for friend requests using Edge Functions
 class FriendServiceImpl extends BaseServiceImpl {
   @override
-  String get tableName => 'friend_requests';
+  String get tableName => 'friends';
   
   /// Sends a friend request using the Edge Function
   Future<Map<String, dynamic>> sendFriendRequest(String recipientId) async {
     try {
+      print('Invoking edge function send-friend-request with recipient_id: $recipientId');
       final response = await supabase.functions.invoke(
         'send-friend-request',
         body: {'recipient_id': recipientId},
       );
+      
+      print('Edge function response status: ${response.status}');
+      print('Edge function response data: ${response.data}');
       
       if (response.status != 200) {
         throw Exception(response.data['error'] ?? 'Failed to send friend request');
@@ -21,6 +25,7 @@ class FriendServiceImpl extends BaseServiceImpl {
       
       return response.data;
     } catch (e) {
+      print('Exception in sendFriendRequest: $e');
       throw Exception('Failed to send friend request: $e');
     }
   }
@@ -53,7 +58,7 @@ class FriendServiceImpl extends BaseServiceImpl {
     final response = await client
         .from(tableName)
         .select()
-        .eq('recipient_id', userId)
+        .eq('friend_id', userId)
         .eq('status', 'pending');
     
     return response;
@@ -66,12 +71,11 @@ class FriendServiceImpl extends BaseServiceImpl {
       throw Exception('User not authenticated');
     }
     
-    // This query depends on your database structure
-    // Assuming you have a 'status' field for accepted friend requests
+    // Recupera amicizie accettate dove l'utente è sia mittente che destinatario
     final response = await client
         .from(tableName)
         .select()
-        .or('sender_id.eq.$userId,recipient_id.eq.$userId')
+        .or('user_id.eq.$userId,friend_id.eq.$userId')
         .eq('status', 'accepted');
     
     return response;

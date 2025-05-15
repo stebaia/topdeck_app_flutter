@@ -115,4 +115,5 @@ class AuthRepositoryImpl implements AuthRepository {
   Stream<AuthState> onAuthStateChange() {
     return _authService.onAuthStateChange();
   }
+  
 } 
