@@ -93,32 +93,54 @@ class FriendServiceImpl extends BaseServiceImpl {
   Future<List<Map<String, dynamic>>> getFriendRequests() async {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) {
+      print('ERROR: getFriendRequests - User not authenticated');
       throw Exception('User not authenticated');
     }
     
-    final response = await client
-        .from(tableName)
-        .select()
-        .eq('friend_id', userId)
-        .eq('status', 'pending');
-    
-    return response;
+    print('Fetching friend requests for user: $userId');
+    try {
+      print('Query: SELECT * FROM $tableName WHERE friend_id = $userId AND status = pending');
+      final response = await client
+          .from(tableName)
+          .select()
+          .eq('friend_id', userId)
+          .eq('status', 'pending');
+      
+      print('Friend requests response: $response');
+      print('Found ${response.length} friend requests');
+      
+      return response;
+    } catch (e) {
+      print('ERROR: Failed to fetch friend requests: $e');
+      rethrow;
+    }
   }
   
   /// Gets all friends of the current user
   Future<List<Map<String, dynamic>>> getFriends() async {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) {
+      print('ERROR: getFriends - User not authenticated');
       throw Exception('User not authenticated');
     }
     
-    // Recupera amicizie accettate dove l'utente è sia mittente che destinatario
-    final response = await client
-        .from(tableName)
-        .select()
-        .or('user_id.eq.$userId,friend_id.eq.$userId')
-        .eq('status', 'accepted');
-    
-    return response;
+    print('Fetching friends for user: $userId');
+    try {
+      print('Query: SELECT * FROM $tableName WHERE (user_id = $userId OR friend_id = $userId) AND status = accepted');
+      // Recupera amicizie accettate dove l'utente è sia mittente che destinatario
+      final response = await client
+          .from(tableName)
+          .select()
+          .or('user_id.eq.$userId,friend_id.eq.$userId')
+          .eq('status', 'accepted');
+      
+      print('Friends response: $response');
+      print('Found ${response.length} friends');
+      
+      return response;
+    } catch (e) {
+      print('ERROR: Failed to fetch friends: $e');
+      rethrow;
+    }
   }
 } 

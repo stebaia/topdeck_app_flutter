@@ -23,12 +23,21 @@ class FriendsBloc extends Bloc<FriendsEvent, FriendsState> {
     LoadFriendRequestsEvent event,
     Emitter<FriendsState> emit,
   ) async {
+    print('FriendsBloc: Loading friend requests');
     emit(FriendsLoading());
     try {
+      print('FriendsBloc: Calling repository.getPendingFriendRequests()');
       final requests = await _friendRepository.getPendingFriendRequests();
+      print('FriendsBloc: Loaded ${requests.length} friend requests');
+      for (final request in requests) {
+        print('FriendsBloc: Request from ${request.senderId} to ${request.recipientId} (status: ${request.status})');
+      }
       emit(FriendRequestsLoaded(requests));
+      print('FriendsBloc: Emitted FriendRequestsLoaded state');
     } catch (e) {
+      print('FriendsBloc ERROR: Failed to load friend requests: $e');
       emit(FriendsError('Failed to load friend requests: ${e.toString()}'));
+      print('FriendsBloc: Emitted FriendsError state');
     }
   }
   
@@ -37,12 +46,21 @@ class FriendsBloc extends Bloc<FriendsEvent, FriendsState> {
     LoadFriendsEvent event,
     Emitter<FriendsState> emit,
   ) async {
+    print('FriendsBloc: Loading friends list');
     emit(FriendsLoading());
     try {
+      print('FriendsBloc: Calling repository.getFriends()');
       final friends = await _friendRepository.getFriends();
+      print('FriendsBloc: Loaded ${friends.length} friends');
+      for (final friend in friends) {
+        print('FriendsBloc: Friend ${friend.id} - ${friend.username}');
+      }
       emit(FriendsLoaded(friends));
+      print('FriendsBloc: Emitted FriendsLoaded state');
     } catch (e) {
+      print('FriendsBloc ERROR: Failed to load friends: $e');
       emit(FriendsError('Failed to load friends: ${e.toString()}'));
+      print('FriendsBloc: Emitted FriendsError state');
     }
   }
   

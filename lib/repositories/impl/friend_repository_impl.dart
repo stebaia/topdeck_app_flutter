@@ -47,8 +47,18 @@ class FriendRepositoryImpl implements FriendRepository {
   @override
   Future<List<FriendRequest>> getPendingFriendRequests() async {
     try {
+      print('Repository: Fetching pending friend requests');
       final requestsData = await _friendService.getFriendRequests();
-      return requestsData.map((data) {
+      print('Repository: Got ${requestsData.length} requests, beginning conversion');
+      
+      final requests = requestsData.map((data) {
+        print('Converting request: $data');
+        // Verifica la presenza di ogni campo richiesto
+        if (data['id'] == null) print('WARNING: Missing id in friend request data');
+        if (data['user_id'] == null) print('WARNING: Missing user_id in friend request data');
+        if (data['friend_id'] == null) print('WARNING: Missing friend_id in friend request data');
+        if (data['status'] == null) print('WARNING: Missing status in friend request data');
+        
         // Convertiamo i campi della tabella friends al modello FriendRequest
         final Map<String, dynamic> convertedData = {
           'id': data['id'],
@@ -57,9 +67,22 @@ class FriendRepositoryImpl implements FriendRepository {
           'status': data['status'],
           'created_at': data['created_at']
         };
-        return FriendRequest.fromJson(convertedData);
+        
+        print('Converted to: $convertedData');
+        try {
+          final request = FriendRequest.fromJson(convertedData);
+          print('Successfully converted to FriendRequest: ${request.id}');
+          return request;
+        } catch (e) {
+          print('ERROR: Failed to convert to FriendRequest: $e');
+          rethrow;
+        }
       }).toList();
+      
+      print('Repository: Returning ${requests.length} friend requests');
+      return requests;
     } catch (e) {
+      print('Repository ERROR: Failed to get pending friend requests: $e');
       rethrow;
     }
   }
@@ -118,8 +141,13 @@ class FriendRepositoryImpl implements FriendRepository {
   Future<List<FriendRequest>> getAll() async {
     // Recupera tutte le richieste di amicizia
     try {
+      print('Repository: getAll - Fetching all friend requests');
       final requestsData = await _friendService.getFriendRequests();
-      return requestsData.map((data) {
+      print('Repository: getAll - Got ${requestsData.length} requests');
+      
+      final requests = requestsData.map((data) {
+        print('getAll - Converting request: $data');
+        
         // Convertiamo i campi della tabella friends al modello FriendRequest
         final Map<String, dynamic> convertedData = {
           'id': data['id'],
@@ -128,9 +156,19 @@ class FriendRepositoryImpl implements FriendRepository {
           'status': data['status'],
           'created_at': data['created_at']
         };
-        return FriendRequest.fromJson(convertedData);
+        
+        try {
+          return FriendRequest.fromJson(convertedData);
+        } catch (e) {
+          print('ERROR in getAll: Failed to convert to FriendRequest: $e');
+          rethrow;
+        }
       }).toList();
+      
+      print('Repository: getAll - Returning ${requests.length} friend requests');
+      return requests;
     } catch (e) {
+      print('Repository ERROR in getAll: $e');
       rethrow;
     }
   }
