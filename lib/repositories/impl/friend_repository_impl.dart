@@ -183,4 +183,17 @@ class FriendRepositoryImpl implements FriendRepository {
     }
     return entity;
   }
+
+  /// Debug utility to get all friendship data
+  Future<Map<String, dynamic>> debugAllFriendships() async {
+    try {
+      print('Repository: Running friendship debug function');
+      final debugData = await _friendService.debugGetFriends();
+      print('Repository: Received debug data');
+      return debugData;
+    } catch (e) {
+      print('Repository ERROR in debugAllFriendships: $e');
+      rethrow;
+    }
+  }
 } 

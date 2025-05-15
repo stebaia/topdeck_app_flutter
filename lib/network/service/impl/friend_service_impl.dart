@@ -143,4 +143,42 @@ class FriendServiceImpl extends BaseServiceImpl {
       rethrow;
     }
   }
+  
+  /// Debug function to get all friendship data for the current user
+  Future<Map<String, dynamic>> debugGetFriends() async {
+    try {
+      print('Calling debug-get-friends edge function');
+      
+      // Ottieni la sessione corrente per avere il token di accesso
+      final session = await supabase.auth.currentSession;
+      
+      if (session == null || session.accessToken.isEmpty) {
+        print('No valid session found, cannot authenticate with Edge Function');
+        throw Exception('User not authenticated or session expired');
+      }
+      
+      // Configura l'header di autorizzazione
+      final headers = {
+        'Authorization': 'Bearer ${session.accessToken}',
+        'Content-Type': 'application/json'
+      };
+      
+      final response = await supabase.functions.invoke(
+        'debug-get-friends',
+        headers: headers,
+      );
+      
+      print('Debug edge function response status: ${response.status}');
+      
+      if (response.status != 200) {
+        throw Exception(response.data['error'] ?? 'Failed to debug friend requests');
+      }
+      
+      print('Debug data: ${response.data}');
+      return response.data;
+    } catch (e) {
+      print('Exception in debugGetFriends: $e');
+      throw Exception('Failed to debug friend requests: $e');
+    }
+  }
 } 

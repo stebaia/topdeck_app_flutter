@@ -46,4 +46,7 @@ class DeclineFriendRequestEvent extends FriendsEvent {
   
   @override
   List<Object?> get props => [friendId];
-} 
+}
+
+/// Evento per il debug delle amicizie
+class DebugFriendshipsEvent extends FriendsEvent {} 

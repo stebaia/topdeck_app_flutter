@@ -14,21 +14,9 @@ class FriendsInitial extends FriendsState {}
 /// Stato di caricamento
 class FriendsLoading extends FriendsState {}
 
-/// Stato di errore
-class FriendsError extends FriendsState {
-  /// Messaggio di errore
-  final String message;
-  
-  /// Costruttore
-  FriendsError(this.message);
-  
-  @override
-  List<Object?> get props => [message];
-}
-
-/// Stato per le richieste di amicizia caricate
+/// Stato che rappresenta le richieste di amicizia caricate
 class FriendRequestsLoaded extends FriendsState {
-  /// Lista delle richieste di amicizia
+  /// Richieste di amicizia pendenti
   final List<FriendRequest> requests;
   
   /// Costruttore
@@ -38,9 +26,9 @@ class FriendRequestsLoaded extends FriendsState {
   List<Object?> get props => [requests];
 }
 
-/// Stato per la lista degli amici caricata
+/// Stato che rappresenta gli amici caricati
 class FriendsLoaded extends FriendsState {
-  /// Lista degli amici
+  /// Lista degli amici dell'utente corrente
   final List<UserProfile> friends;
   
   /// Costruttore
@@ -50,7 +38,7 @@ class FriendsLoaded extends FriendsState {
   List<Object?> get props => [friends];
 }
 
-/// Stato per la richiesta di amicizia inviata con successo
+/// Stato che rappresenta una richiesta di amicizia inviata
 class FriendRequestSent extends FriendsState {
   /// ID dell'utente a cui è stata inviata la richiesta
   final String recipientId;
@@ -62,7 +50,7 @@ class FriendRequestSent extends FriendsState {
   List<Object?> get props => [recipientId];
 }
 
-/// Stato per la richiesta di amicizia accettata
+/// Stato che rappresenta una richiesta di amicizia accettata
 class FriendRequestAccepted extends FriendsState {
   /// ID dell'utente la cui richiesta è stata accettata
   final String friendId;
@@ -74,7 +62,7 @@ class FriendRequestAccepted extends FriendsState {
   List<Object?> get props => [friendId];
 }
 
-/// Stato per la richiesta di amicizia rifiutata
+/// Stato che rappresenta una richiesta di amicizia rifiutata
 class FriendRequestDeclined extends FriendsState {
   /// ID dell'utente la cui richiesta è stata rifiutata
   final String friendId;
@@ -84,4 +72,28 @@ class FriendRequestDeclined extends FriendsState {
   
   @override
   List<Object?> get props => [friendId];
+}
+
+/// Stato che rappresenta un errore
+class FriendsError extends FriendsState {
+  /// Messaggio di errore
+  final String message;
+  
+  /// Costruttore
+  FriendsError(this.message);
+  
+  @override
+  List<Object?> get props => [message];
+}
+
+/// Stato che rappresenta i dati di debug delle amicizie
+class FriendshipsDebugLoaded extends FriendsState {
+  /// Dati di debug
+  final Map<String, dynamic> debugData;
+  
+  /// Costruttore
+  FriendshipsDebugLoaded(this.debugData);
+  
+  @override
+  List<Object?> get props => [debugData];
 } 

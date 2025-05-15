@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:topdeck_app_flutter/repositories/friend_repository.dart';
+import 'package:topdeck_app_flutter/repositories/impl/friend_repository_impl.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/friends/friends_event.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/friends/friends_state.dart';
 
@@ -16,6 +17,7 @@ class FriendsBloc extends Bloc<FriendsEvent, FriendsState> {
     on<SendFriendRequestEvent>(_onSendFriendRequest);
     on<AcceptFriendRequestEvent>(_onAcceptFriendRequest);
     on<DeclineFriendRequestEvent>(_onDeclineFriendRequest);
+    on<DebugFriendshipsEvent>(_onDebugFriendships);
   }
   
   /// Gestisce l'evento LoadFriendRequestsEvent
@@ -109,6 +111,38 @@ class FriendsBloc extends Bloc<FriendsEvent, FriendsState> {
       add(LoadFriendRequestsEvent());
     } catch (e) {
       emit(FriendsError('Failed to decline friend request: ${e.toString()}'));
+    }
+  }
+  
+  /// Gestisce l'evento DebugFriendshipsEvent
+  Future<void> _onDebugFriendships(
+    DebugFriendshipsEvent event,
+    Emitter<FriendsState> emit,
+  ) async {
+    print('FriendsBloc: Starting friendship debug');
+    emit(FriendsLoading());
+    try {
+      print('FriendsBloc: Calling repository debug function');
+      
+      if (_friendRepository is FriendRepositoryImpl) {
+        final debugData = await (_friendRepository as FriendRepositoryImpl).debugAllFriendships();
+        print('FriendsBloc: Received debug data');
+        
+        // Stampare informazioni rilevanti
+        print('FriendsBloc DEBUG: Total records: ${debugData['summary']['total']}');
+        print('FriendsBloc DEBUG: Incoming: ${debugData['summary']['incoming']}');
+        print('FriendsBloc DEBUG: Outgoing: ${debugData['summary']['outgoing']}');
+        print('FriendsBloc DEBUG: Accepted: ${debugData['summary']['accepted']}');
+        
+        emit(FriendshipsDebugLoaded(debugData));
+        print('FriendsBloc: Emitted FriendshipsDebugLoaded state');
+      } else {
+        throw Exception('Repository implementation does not support debugging');
+      }
+    } catch (e) {
+      print('FriendsBloc ERROR: Failed to debug friendships: $e');
+      emit(FriendsError('Failed to debug friendships: ${e.toString()}'));
+      print('FriendsBloc: Emitted FriendsError state');
     }
   }
 } 

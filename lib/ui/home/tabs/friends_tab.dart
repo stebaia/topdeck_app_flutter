@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -60,25 +61,88 @@ class _FriendsTabState extends State<FriendsTab> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Amici'),
-        centerTitle: true,
-        bottom: TabBar(
+    return BlocListener<FriendsBloc, FriendsState>(
+      listener: (context, state) {
+        if (state is FriendshipsDebugLoaded) {
+          _showDebugDialog(context, state.debugData);
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Amici'),
+          centerTitle: true,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.bug_report),
+              tooltip: 'Debug',
+              onPressed: () {
+                context.read<FriendsBloc>().add(DebugFriendshipsEvent());
+              },
+            ),
+          ],
+          bottom: TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(text: 'Cerca'),
+              Tab(text: 'Richieste'),
+              Tab(text: 'Amici'),
+            ],
+          ),
+        ),
+        body: TabBarView(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Cerca'),
-            Tab(text: 'Richieste'),
-            Tab(text: 'Amici'),
+          children: [
+            _buildSearchTab(),
+            _buildRequestsTab(),
+            _buildFriendsTab(),
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildSearchTab(),
-          _buildRequestsTab(),
-          _buildFriendsTab(),
+    );
+  }
+  
+  void _showDebugDialog(BuildContext context, Map<String, dynamic> debugData) {
+    final summary = debugData['summary'];
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Debug Info'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('UserID: ${debugData['userId']}'),
+              const Divider(),
+              Text('Total records: ${summary['total']}'),
+              Text('Incoming requests: ${summary['incoming']}'),
+              Text('Outgoing requests: ${summary['outgoing']}'),
+              Text('Accepted friends: ${summary['accepted']}'),
+              const Divider(),
+              const SizedBox(height: 16),
+              const Text('Incoming requests:', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                debugData['incomingRequests'].isNotEmpty 
+                    ? const JsonEncoder.withIndent('  ').convert(debugData['incomingRequests'])
+                    : 'None',
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+              ),
+              const SizedBox(height: 16),
+              const Text('Outgoing requests:', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                debugData['outgoingRequests'].isNotEmpty 
+                    ? const JsonEncoder.withIndent('  ').convert(debugData['outgoingRequests'])
+                    : 'None',
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Chiudi'),
+          ),
         ],
       ),
     );
