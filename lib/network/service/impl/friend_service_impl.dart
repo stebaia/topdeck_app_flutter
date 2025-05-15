@@ -33,10 +33,14 @@ class FriendServiceImpl extends BaseServiceImpl {
   /// Accepts a friend request using the Edge Function
   Future<Map<String, dynamic>> acceptFriendRequest(String friendId) async {
     try {
+      print('Invoking edge function accept-friend-request with friendId: $friendId');
       final response = await supabase.functions.invoke(
         'accept-friend-request',
         body: {'friendId': friendId},
       );
+      
+      print('Edge function response status: ${response.status}');
+      print('Edge function response data: ${response.data}');
       
       if (response.status != 200) {
         throw Exception(response.data['error'] ?? 'Failed to accept friend request');
@@ -44,6 +48,7 @@ class FriendServiceImpl extends BaseServiceImpl {
       
       return response.data;
     } catch (e) {
+      print('Exception in acceptFriendRequest: $e');
       throw Exception('Failed to accept friend request: $e');
     }
   }
