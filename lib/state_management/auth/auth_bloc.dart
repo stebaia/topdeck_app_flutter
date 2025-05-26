@@ -34,6 +34,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<SignOutEvent>(_onSignOut);
     on<ResetPasswordEvent>(_onResetPassword);
     on<UpdatePasswordEvent>(_onUpdatePassword);
+    on<RecoveryPasswordEvent>(_onRecoveryPassword);
 
     // Facciamo un check immediato dell'autenticazione
     _checkAuthStatus();
@@ -68,7 +69,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       CheckAuthStatusEvent event, Emitter<AuthState> emit) async {
     try {
       emit(AuthLoadingState());
-      
+
       if (_authRepository.isAuthenticated()) {
         final user = _authRepository.getCurrentUser();
         _logger.i('User is authenticated: ${user?.id}');
@@ -104,7 +105,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onSignUp(SignUpEvent event, Emitter<AuthState> emit) async {
     try {
       emit(AuthLoadingState());
-      
+
       final profile = await _authRepository.signUp(
         email: event.email,
         password: event.password,
@@ -117,7 +118,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         stato: event.stato,
         avatarUrl: event.avatarUrl,
       );
-      
+
       emit(AuthenticatedState(profile: profile));
     } on supabase.AuthException catch (e) {
       _logger.e('Auth exception during sign up: ${e.message}');
@@ -132,12 +133,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onSignIn(SignInEvent event, Emitter<AuthState> emit) async {
     try {
       emit(AuthLoadingState());
-      
+
       final authResponse = await _authRepository.signIn(
         email: event.email,
         password: event.password,
       );
-      
+
       if (authResponse.user != null) {
         final profile = await _profileRepository.get(authResponse.user!.id);
         if (profile != null) {
@@ -156,30 +157,31 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthErrorState(message: 'Login failed: $e'));
     }
   }
-  
+
   /// Handle Google sign in event
-  Future<void> _onSignInWithGoogle(SignInWithGoogleEvent event, Emitter<AuthState> emit) async {
+  Future<void> _onSignInWithGoogle(
+      SignInWithGoogleEvent event, Emitter<AuthState> emit) async {
     try {
       emit(AuthLoadingState());
-      
+
       _logger.i('Starting Google sign-in flow');
       // Inizia il flusso di autenticazione OAuth con Google
       final success = await _authRepository.signInWithGoogle();
-      
+
       _logger.i('Google sign-in initiated: $success');
-      
+
       // Se il flusso OAuth non è andato a buon fine (l'utente ha annullato il processo o c'è stato un errore)
       if (!success) {
-        _logger.w('Google sign-in was not successful, emitting UnauthenticatedState');
+        _logger.w(
+            'Google sign-in was not successful, emitting UnauthenticatedState');
         emit(UnauthenticatedState());
       }
-      
+
       // Se success è true, il flusso OAuth è iniziato correttamente.
       // In questo caso non emettiamo un nuovo stato perché l'utente sta completando l'autenticazione
       // nel browser e quando torna all'app, l'evento onAuthStateChange rileverà il nuovo stato di autenticazione.
       // Nota: La creazione del profilo per l'utente Google è gestita nel metodo _checkAuthStatus
       // che viene chiamato quando l'evento AuthChangeEvent.signedIn viene rilevato.
-      
     } on supabase.AuthException catch (e) {
       _logger.e('Auth exception during Google sign in: ${e.message}');
       emit(AuthErrorState(message: e.message));
@@ -190,32 +192,35 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   /// Handle native Google sign in event
-  Future<void> _onSignInWithGoogleNatively(SignInWithGoogleNativelyEvent event, Emitter<AuthState> emit) async {
+  Future<void> _onSignInWithGoogleNatively(
+      SignInWithGoogleNativelyEvent event, Emitter<AuthState> emit) async {
     try {
       emit(AuthLoadingState());
-      
+
       _logger.i('Starting native Google sign-in flow');
-      
+
       // Esegui l'autenticazione nativa con Google
       final authResponse = await _authRepository.signInWithGoogleNatively();
-      
+
       _logger.i('Google sign-in completed successfully');
-      
+
       if (authResponse.user != null) {
         final profile = await _profileRepository.get(authResponse.user!.id);
         if (profile != null) {
           emit(AuthenticatedState(profile: profile));
         } else {
-          _logger.w('Profile not found after Google sign in, needs profile completion');
-          
+          _logger.w(
+              'Profile not found after Google sign in, needs profile completion');
+
           // Inviamo lo stato che indica che l'utente deve completare il profilo
           final user = authResponse.user!;
           String? name;
-          
-          if (user.userMetadata != null && user.userMetadata!['full_name'] != null) {
+
+          if (user.userMetadata != null &&
+              user.userMetadata!['full_name'] != null) {
             name = user.userMetadata!['full_name'] as String;
           }
-          
+
           emit(GoogleAuthenticatedNeedsProfileState(
             userId: user.id,
             email: user.email ?? '',
@@ -227,7 +232,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         _logger.w('User is null after Google sign in');
         emit(UnauthenticatedState());
       }
-      
     } on supabase.AuthException catch (e) {
       _logger.e('Auth exception during native Google sign in: ${e.message}');
       emit(AuthErrorState(message: e.message));
@@ -241,9 +245,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onSignOut(SignOutEvent event, Emitter<AuthState> emit) async {
     try {
       emit(AuthLoadingState());
-      
+
       await _authRepository.signOut();
-      
+
       emit(UnauthenticatedState());
     } catch (e) {
       _logger.e('Error during sign out: $e');
@@ -256,9 +260,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ResetPasswordEvent event, Emitter<AuthState> emit) async {
     try {
       emit(AuthLoadingState());
-      
+
       await _authRepository.resetPassword(email: event.email);
-      
+
       emit(PasswordResetSentState(email: event.email));
     } catch (e) {
       _logger.e('Error during password reset: $e');
@@ -271,9 +275,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       UpdatePasswordEvent event, Emitter<AuthState> emit) async {
     try {
       emit(AuthLoadingState());
-      
+
       await _authRepository.updatePassword(password: event.password);
-      
+
       emit(PasswordUpdatedState());
     } catch (e) {
       _logger.e('Error during password update: $e');
@@ -282,17 +286,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   /// Handle register with Google event
-  Future<void> _onRegisterWithGoogle(RegisterWithGoogleEvent event, Emitter<AuthState> emit) async {
+  Future<void> _onRegisterWithGoogle(
+      RegisterWithGoogleEvent event, Emitter<AuthState> emit) async {
     try {
       emit(AuthLoadingState());
-      
+
       _logger.i('Starting Google registration flow');
-      
+
       // Prima autentichiamo l'utente con Google
       final authResponse = await _authRepository.signInWithGoogleNatively();
-      
+
       _logger.i('Google sign-in completed successfully for registration');
-      
+
       if (authResponse.user != null) {
         final profile = await _profileRepository.get(authResponse.user!.id);
         if (profile != null) {
@@ -300,14 +305,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         } else {
           _logger.w('Profile not found after Google sign in');
           // Non tentiamo di creare un profilo automaticamente, ma emettiamo un errore
-          emit(AuthErrorState(message: 'Profilo non trovato. Devi prima registrarti con Google.'));
+          emit(AuthErrorState(
+              message:
+                  'Profilo non trovato. Devi prima registrarti con Google.'));
         }
       } else {
         _logger.w('User is null after Google sign in');
         emit(UnauthenticatedState());
-  
       }
-      
     } on supabase.AuthException catch (e) {
       _logger.e('Auth exception during Google registration: ${e.message}');
       emit(AuthErrorState(message: e.message));
@@ -318,12 +323,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   /// Handle complete Google profile event
-  Future<void> _onCompleteGoogleProfile(CompleteGoogleProfileEvent event, Emitter<AuthState> emit) async {
+  Future<void> _onCompleteGoogleProfile(
+      CompleteGoogleProfileEvent event, Emitter<AuthState> emit) async {
     try {
       emit(AuthLoadingState());
-      
+
       _logger.i('Completing profile for Google authenticated user');
-      
+
       // Verificare se l'utente esiste ancora
       final user = _authRepository.getCurrentUser();
       if (user == null || user.id != event.userId) {
@@ -331,7 +337,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(UnauthenticatedState());
         return;
       }
-      
+
       // Creare un nuovo profilo con i dati forniti
       final profile = Profile.create(
         username: event.username,
@@ -342,19 +348,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         provincia: event.provincia,
         stato: event.stato,
       );
-      
+
       // Sovrascrivere l'ID con l'ID dell'utente di Supabase
       final profileWithAuthId = profile.copyWith(id: event.userId);
-      
+
       try {
         // Salvare il profilo nel database
         final savedProfile = await _profileRepository.create(profileWithAuthId);
-        
+
         _logger.i('Profile completed successfully for Google user');
         emit(AuthenticatedState(profile: savedProfile));
       } catch (e) {
         _logger.e('Error creating profile for Google user: $e');
-        emit(AuthErrorState(message: 'Non è stato possibile creare il profilo: $e'));
+        emit(AuthErrorState(
+            message: 'Non è stato possibile creare il profilo: $e'));
       }
     } catch (e) {
       _logger.e('Error completing Google profile: $e');
@@ -372,7 +379,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           try {
             final profile = await _profileRepository.get(user.id);
             if (profile != null) {
-              _logger.i('Profile retrieved successfully, emitting authenticated state');
+              _logger.i(
+                  'Profile retrieved successfully, emitting authenticated state');
               emit(AuthenticatedState(profile: profile));
             } else {
               _logger.w('Profile not found for authenticated user');
@@ -396,4 +404,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthErrorState(message: 'Authentication check failed: $e'));
     }
   }
-} 
+
+  /// Handle recovery password event
+  Future<void> _onRecoveryPassword(
+      RecoveryPasswordEvent event, Emitter<AuthState> emit) async {
+    try {
+      emit(TryToRecoveryPasswordState());
+
+      await _authRepository.recoveryPassword(email: event.email);
+    } catch (e) {
+      _logger.e('Error during recovery password: $e');
+      emit(AuthErrorState(message: 'Password recovery failed: $e'));
+    }
+  }
+}

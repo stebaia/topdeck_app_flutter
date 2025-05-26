@@ -104,15 +104,15 @@ class CompleteGoogleProfileEvent extends AuthEvent {
 
   @override
   List<Object> get props => [
-    userId,
-    username,
-    nome,
-    cognome,
-    dataDiNascita,
-    citta,
-    provincia,
-    stato,
-  ];
+        userId,
+        username,
+        nome,
+        cognome,
+        dataDiNascita,
+        citta,
+        provincia,
+        stato,
+      ];
 }
 
 /// Event for user logout
@@ -131,9 +131,22 @@ class ResetPasswordEvent extends AuthEvent {
 /// Event for password update
 class UpdatePasswordEvent extends AuthEvent {
   final String password;
+  final String? accessToken;
+  final String? refreshToken;
 
-  const UpdatePasswordEvent({required this.password});
+  const UpdatePasswordEvent({
+    required this.password,
+    this.accessToken,
+    this.refreshToken,
+  });
 
   @override
-  List<Object> get props => [password];
-} 
+  List<Object?> get props => [password, accessToken, refreshToken];
+}
+
+/// Event for recovery password
+class RecoveryPasswordEvent extends AuthEvent {
+  final String email;
+
+  const RecoveryPasswordEvent({required this.email});
+}

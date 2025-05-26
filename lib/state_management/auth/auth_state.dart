@@ -67,4 +67,13 @@ class GoogleAuthenticatedNeedsProfileState extends AuthState {
 
   @override
   List<Object?> get props => [userId, email, name, avatarUrl];
-} 
+}
+
+class TryToRecoveryPasswordState extends AuthState {
+  const TryToRecoveryPasswordState();
+}
+
+/// Recovery password state
+class RecoveryPasswordState extends AuthState {
+  const RecoveryPasswordState();
+}
