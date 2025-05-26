@@ -181,7 +181,7 @@ class MatchServiceImpl implements MatchService {
   Future<List<Map<String, dynamic>>> getUserMatches() async {
     try {
       final response = await client.functions.invoke(
-        'see-my-matches',
+        'see-my-future-match',
         method: HttpMethod.get,
       );
 

@@ -65,6 +65,40 @@ class _FriendsTabState extends State<FriendsTab> with SingleTickerProviderStateM
       listener: (context, state) {
         if (state is FriendshipsDebugLoaded) {
           _showDebugDialog(context, state.debugData);
+        } else if (state is FriendRequestAccepted) {
+          // Mostra messaggio di successo quando una richiesta viene accettata
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Richiesta di amicizia accettata!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Cambia tab per mostrare la lista amici
+          _tabController.animateTo(2); // Indice della tab "Amici"
+        } else if (state is FriendRequestDeclined) {
+          // Mostra messaggio quando una richiesta viene rifiutata
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Richiesta di amicizia rifiutata'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        } else if (state is FriendRemoved) {
+          // Mostra messaggio quando un'amicizia viene rimossa
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Amicizia rimossa con successo'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        } else if (state is FriendsError) {
+          // Mostra errori
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Errore: ${state.message}'),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
       },
       child: Scaffold(
@@ -287,6 +321,10 @@ class _FriendsTabState extends State<FriendsTab> with SingleTickerProviderStateM
       ),
       title: Text(request.sender?.username ?? 'Utente'),
       subtitle: const Text('Vuole aggiungerti come amico'),
+      onTap: request.sender != null ? () {
+        // Naviga al profilo dell'utente che ha inviato la richiesta
+        _navigateToUserProfile(request.sender!);
+      } : null,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -50,7 +50,7 @@ class _InvitationListWidgetState extends State<InvitationListWidget> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  state.message,
+                  state.error,
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 14),
                 ),

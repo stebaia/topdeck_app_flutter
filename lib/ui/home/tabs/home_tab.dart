@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:topdeck_app_flutter/routers/app_router.gr.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/match_list/match_list_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/match_list/match_list_event.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/match_list/match_list_state.dart';
-import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/invitation_list_bloc.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/received_invitation_list_bloc.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/sent_invitation_list_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/invitation_list_event.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/invitation_list_state.dart';
 import 'package:topdeck_app_flutter/ui/common/error_view.dart';
 import 'package:topdeck_app_flutter/ui/common/shimmer_loading.dart';
 import 'package:topdeck_app_flutter/ui/match/match_detail_page.dart';
 import 'package:topdeck_app_flutter/ui/match/match_invitation_detail.dart';
-import 'package:provider/provider.dart';
 
 @RoutePage(name: 'HomeTabRoute')
 class HomeTab extends StatefulWidget {
@@ -22,30 +23,11 @@ class HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<HomeTab> {
-  // Riferimenti ai bloc degli inviti
-  InvitationListBloc? _receivedInvitationsBloc;
-  InvitationListBloc? _sentInvitationsBloc;
-  
   @override
   void initState() {
     super.initState();
     // Carica i dati all'avvio
     context.read<MatchListBloc>().add(LoadMatchesEvent());
-  }
-  
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    
-    // Trova i bloc per inviti ricevuti e inviati
-    final blocs = Provider.of<List<InvitationListBloc>>(context, listen: false);
-    for (final bloc in blocs) {
-      if (bloc.isForSentInvitations) {
-        _sentInvitationsBloc = bloc;
-      } else {
-        _receivedInvitationsBloc = bloc;
-      }
-    }
   }
 
   @override
@@ -61,14 +43,10 @@ class _HomeTabState extends State<HomeTab> {
           context.read<MatchListBloc>().add(RefreshMatchesEvent());
           
           // Inviti ricevuti
-          if (_receivedInvitationsBloc != null) {
-            _receivedInvitationsBloc!.add(RefreshInvitationsEvent());
-          }
+          context.read<ReceivedInvitationListBloc>().add(RefreshInvitationsEvent());
           
           // Inviti inviati
-          if (_sentInvitationsBloc != null) {
-            _sentInvitationsBloc!.add(RefreshSentInvitationsEvent());
-          }
+          context.read<SentInvitationListBloc>().add(RefreshSentInvitationsEvent());
           
           // Attendi un po' per permettere alle richieste di completarsi
           await Future.delayed(const Duration(milliseconds: 500));
@@ -183,21 +161,17 @@ class _HomeTabState extends State<HomeTab> {
   }
   
   Widget _buildReceivedInvitations() {
-    if (_receivedInvitationsBloc == null) {
-      return const Center(child: Text('Errore nel caricamento degli inviti ricevuti'));
-    }
-    
     return SizedBox(
       height: 180,
-      child: BlocBuilder<InvitationListBloc, InvitationListState>(
-        bloc: _receivedInvitationsBloc,
+      child: BlocBuilder<ReceivedInvitationListBloc, InvitationListState>(
+        bloc: context.read<ReceivedInvitationListBloc>(),
         builder: (context, state) {
           if (state is InvitationListLoadingState) {
             return _buildHorizontalShimmerLoading();
           } else if (state is InvitationListErrorState && !state.forSentInvitations) {
             return ErrorView(
-              message: state.message,
-              onRetry: () => _receivedInvitationsBloc!.add(LoadInvitationsEvent()),
+              message: state.error,
+              onRetry: () => context.read<ReceivedInvitationListBloc>().add(LoadInvitationsEvent()),
             );
           } else if (state is InvitationListLoadedState && !state.areSentInvitations) {
             if (state.invitations.isEmpty) {
@@ -211,7 +185,7 @@ class _HomeTabState extends State<HomeTab> {
               itemCount: state.invitations.length,
               itemBuilder: (context, index) {
                 final invitation = state.invitations[index];
-                return _buildInvitationCard(invitation, isReceived: true, bloc: _receivedInvitationsBloc);
+                return _buildInvitationCard(invitation, isReceived: true);
               },
             );
           }
@@ -223,21 +197,17 @@ class _HomeTabState extends State<HomeTab> {
   }
   
   Widget _buildSentInvitations() {
-    if (_sentInvitationsBloc == null) {
-      return const Center(child: Text('Errore nel caricamento degli inviti inviati'));
-    }
-    
     return SizedBox(
       height: 180,
-      child: BlocBuilder<InvitationListBloc, InvitationListState>(
-        bloc: _sentInvitationsBloc,
+      child: BlocBuilder<SentInvitationListBloc, InvitationListState>(
+        bloc: context.read<SentInvitationListBloc>(),
         builder: (context, state) {
           if (state is SentInvitationsLoadingState || state is InvitationListLoadingState) {
             return _buildHorizontalShimmerLoading();
           } else if (state is InvitationListErrorState && state.forSentInvitations) {
             return ErrorView(
-              message: state.message,
-              onRetry: () => _sentInvitationsBloc!.add(LoadSentInvitationsEvent()),
+              message: state.error,
+              onRetry: () => context.read<SentInvitationListBloc>().add(LoadSentInvitationsEvent()),
             );
           } else if (state is InvitationListLoadedState && state.areSentInvitations) {
             if (state.invitations.isEmpty) {
@@ -279,7 +249,12 @@ class _HomeTabState extends State<HomeTab> {
           MaterialPageRoute(
             builder: (context) => MatchDetailPage(match: match),
           ),
-        );
+        ).then((value) {
+          // Se ricevi 'true', aggiorna la lista partite
+          if (value == true) {
+            context.read<MatchListBloc>().add(RefreshMatchesEvent());
+          }
+        });
       },
       child: Card(
         margin: const EdgeInsets.only(right: 12, bottom: 4),
@@ -392,7 +367,7 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-  Widget _buildInvitationCard(Map<String, dynamic> invitation, {required bool isReceived, InvitationListBloc? bloc}) {
+  Widget _buildInvitationCard(Map<String, dynamic> invitation, {required bool isReceived}) {
     final String opponentName = isReceived 
       ? (invitation['sender']?['username'] ?? 'Sconosciuto')
       : (invitation['receiver']?['username'] ?? 'Sconosciuto');
@@ -413,15 +388,7 @@ class _HomeTabState extends State<HomeTab> {
 
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MatchInvitationDetailPage(
-              invitation: invitation,
-              isReceived: isReceived,
-            ),
-          ),
-        );
+        context.pushRoute(MatchInvitationDetailPageRoute(invitation: invitation, isReceived: isReceived));
       },
       child: Card(
         margin: const EdgeInsets.only(right: 12, bottom: 4),
@@ -490,7 +457,7 @@ class _HomeTabState extends State<HomeTab> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          bloc?.add(AcceptInvitationEvent(invitation['id']));
+                          context.read<ReceivedInvitationListBloc>().add(AcceptInvitationEvent(invitation['id']));
                         },
                         style: ElevatedButton.styleFrom(
                           padding: EdgeInsets.zero,
@@ -505,7 +472,7 @@ class _HomeTabState extends State<HomeTab> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () {
-                          bloc?.add(DeclineInvitationEvent(invitation['id']));
+                          context.read<ReceivedInvitationListBloc>().add(DeclineInvitationEvent(invitation['id']));
                         },
                         style: OutlinedButton.styleFrom(
                           padding: EdgeInsets.zero,

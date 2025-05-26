@@ -9,55 +9,45 @@ abstract class InvitationListState extends Equatable {
 /// Initial state
 class InvitationListInitialState extends InvitationListState {}
 
-/// Loading state
+/// Loading invitations state
 class InvitationListLoadingState extends InvitationListState {}
-
-/// Loaded state with received invitations
-class InvitationListLoadedState extends InvitationListState {
-  /// The loaded invitations
-  final List<Map<String, dynamic>> invitations;
-  /// Whether these are sent invitations (false = received)
-  final bool areSentInvitations;
-
-  /// Constructor
-  InvitationListLoadedState(this.invitations, {this.areSentInvitations = false});
-
-  @override
-  List<Object?> get props => [invitations, areSentInvitations];
-}
 
 /// Loading sent invitations state
 class SentInvitationsLoadingState extends InvitationListState {}
 
-/// Loaded state with sent invitations
-class SentInvitationsLoadedState extends InvitationListState {
-  /// The loaded sent invitations
+/// Invitations loaded state
+class InvitationListLoadedState extends InvitationListState {
+  /// List of invitations
   final List<Map<String, dynamic>> invitations;
-
+  
+  /// Whether these are sent invitations
+  final bool areSentInvitations;
+  
   /// Constructor
-  SentInvitationsLoadedState(this.invitations);
-
+  InvitationListLoadedState(this.invitations, {required this.areSentInvitations});
+  
   @override
-  List<Object?> get props => [invitations];
+  List<Object?> get props => [invitations, areSentInvitations];
 }
 
 /// Error state
 class InvitationListErrorState extends InvitationListState {
-  /// The error message
-  final String message;
-  /// Whether this error is from sent invitations
+  /// Error message
+  final String error;
+  
+  /// Whether this error is for sent invitations
   final bool forSentInvitations;
-
+  
   /// Constructor
-  InvitationListErrorState(this.message, {this.forSentInvitations = false});
-
+  InvitationListErrorState(this.error, {required this.forSentInvitations});
+  
   @override
-  List<Object?> get props => [message, forSentInvitations];
+  List<Object?> get props => [error, forSentInvitations];
 }
 
-/// Processing invitation action state (accepting/declining)
+/// Processing invitation state
 class InvitationProcessingState extends InvitationListState {
-  /// The invitation being processed
+  /// ID of the invitation being processed
   final String invitationId;
   
   /// Constructor
@@ -67,21 +57,48 @@ class InvitationProcessingState extends InvitationListState {
   List<Object?> get props => [invitationId];
 }
 
-/// Invitation accepted state
-class InvitationAcceptedState extends InvitationListState {
-  /// The accepted invitation
+/// Selecting deck for invitation state 
+class SelectingDeckForInvitationState extends InvitationListState {
+  /// The invitation data
   final Map<String, dynamic> invitation;
   
   /// Constructor
-  InvitationAcceptedState(this.invitation);
+  SelectingDeckForInvitationState(this.invitation);
   
   @override
   List<Object?> get props => [invitation];
 }
 
+/// Invitation accepted state
+class InvitationAcceptedState extends InvitationListState {
+  /// The updated invitation data
+  final Map<String, dynamic> data;
+  
+  /// Constructor
+  InvitationAcceptedState(this.data);
+  
+  @override
+  List<Object?> get props => [data];
+}
+
+/// Invitation accepted and match created state
+class MatchCreatedFromInvitationState extends InvitationListState {
+  /// The match data
+  final Map<String, dynamic> match;
+  
+  /// The invitation id
+  final String invitationId;
+  
+  /// Constructor
+  MatchCreatedFromInvitationState({required this.match, required this.invitationId});
+  
+  @override
+  List<Object?> get props => [match, invitationId];
+}
+
 /// Invitation declined state
 class InvitationDeclinedState extends InvitationListState {
-  /// The declined invitation id
+  /// ID of the declined invitation
   final String invitationId;
   
   /// Constructor

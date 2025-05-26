@@ -427,4 +427,31 @@ class DeckServiceImpl {
       throw Exception('Failed to delete deck: $e');
     }
   }
+  
+  /// Gets all decks for the current user
+  Future<List<Map<String, dynamic>>> getUserDecks() async {
+    try {
+      // Utilizziamo il metodo listDecks che già esiste nella classe
+      return await listDecks();
+    } catch (e) {
+      print('Failed to get user decks: $e');
+      // In caso di errore nella funzione Edge, prova a interrogare direttamente il DB
+      try {
+        final currentUser = client.auth.currentUser;
+        if (currentUser == null) {
+          throw AuthException('User not authenticated');
+        }
+        
+        final response = await client
+          .from('decks')
+          .select('*')
+          .eq('user_id', currentUser.id);
+          
+        return response;
+      } catch (dbError) {
+        print('Failed to get user decks from DB: $dbError');
+        throw Exception('Failed to get user decks: $e');
+      }
+    }
+  }
 } 

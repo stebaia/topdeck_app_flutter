@@ -42,6 +42,21 @@ class AcceptInvitationEvent extends InvitationListEvent {
   List<Object?> get props => [invitationId];
 }
 
+/// Event to accept a match invitation with a selected deck
+class AcceptInvitationWithDeckEvent extends InvitationListEvent {
+  /// The invitation ID to accept
+  final String invitationId;
+  
+  /// The ID of the selected deck to use
+  final String selectedDeckId;
+  
+  /// Constructor
+  AcceptInvitationWithDeckEvent(this.invitationId, this.selectedDeckId);
+  
+  @override
+  List<Object?> get props => [invitationId, selectedDeckId];
+}
+
 /// Event to decline a match invitation
 class DeclineInvitationEvent extends InvitationListEvent {
   /// The invitation ID to decline

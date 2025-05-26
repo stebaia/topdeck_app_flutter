@@ -9,19 +9,19 @@ import 'package:topdeck_app_flutter/state_management/blocs/match_wizard/match_wi
 import 'package:topdeck_app_flutter/state_management/blocs/match_wizard/match_wizard_state.dart';
 
 @RoutePage()
-class DeckSelectionPage extends StatefulWidget {
+class DeckSelectionWizardPage extends StatefulWidget  {
   final DeckFormat format;
   
-  const DeckSelectionPage({
+  const DeckSelectionWizardPage({
     super.key,
     required this.format,
   });
 
   @override
-  State<DeckSelectionPage> createState() => _DeckSelectionPageState();
+  State<DeckSelectionWizardPage> createState() => _DeckSelectionPageState();
 }
 
-class _DeckSelectionPageState extends State<DeckSelectionPage> {
+class _DeckSelectionPageState extends State<DeckSelectionWizardPage> {
   @override
   void initState() {
     super.initState();

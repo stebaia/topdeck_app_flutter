@@ -14,19 +14,6 @@ final List<SingleChildWidget> _providers = [
     create: (_) => const FlutterSecureStorage(),
   ),
   
-  // Provider per i bloc degli inviti (ricevuti e inviati)
-  Provider<List<InvitationListBloc>>(
-    create: (_) => [
-      InvitationListBloc(isForSentInvitations: false),
-      InvitationListBloc(isForSentInvitations: true),
-    ],
-    dispose: (_, blocs) {
-      for (final bloc in blocs) {
-        bloc.close();
-      }
-    },
-  ),
-  
   // Add all Supabase repositories from ServiceLocator
   ...ServiceLocator.getProviders(),
 ];

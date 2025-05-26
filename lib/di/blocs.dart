@@ -13,6 +13,7 @@ final List<BlocProvider> _blocs = [
   BlocProvider<UserSearchBloc>(
     create: (context) => UserSearchBloc(
       context.read<UserSearchRepository>(),
+      context.read<FriendRepository>(),
     ),
   ),
   
@@ -35,5 +36,14 @@ final List<BlocProvider> _blocs = [
   // Match list bloc
   BlocProvider<MatchListBloc>(
     create: (context) => MatchListBloc(),
+  ),
+  
+  // Invitation list blocs (separati per tipo)
+  BlocProvider<ReceivedInvitationListBloc>(
+    create: (context) => ReceivedInvitationListBloc(),
+  ),
+  
+  BlocProvider<SentInvitationListBloc>(
+    create: (context) => SentInvitationListBloc(),
   ),
 ];

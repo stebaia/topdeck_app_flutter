@@ -17,6 +17,7 @@ class FriendsBloc extends Bloc<FriendsEvent, FriendsState> {
     on<SendFriendRequestEvent>(_onSendFriendRequest);
     on<AcceptFriendRequestEvent>(_onAcceptFriendRequest);
     on<DeclineFriendRequestEvent>(_onDeclineFriendRequest);
+    on<RemoveFriendEvent>(_onRemoveFriend);
     on<DebugFriendshipsEvent>(_onDebugFriendships);
   }
   
@@ -92,6 +93,9 @@ class FriendsBloc extends Bloc<FriendsEvent, FriendsState> {
       
       // Ricarica la lista delle richieste dopo aver accettato
       add(LoadFriendRequestsEvent());
+      
+      // Ricarica anche la lista degli amici
+      add(LoadFriendsEvent());
     } catch (e) {
       emit(FriendsError('Failed to accept friend request: ${e.toString()}'));
     }
@@ -111,6 +115,23 @@ class FriendsBloc extends Bloc<FriendsEvent, FriendsState> {
       add(LoadFriendRequestsEvent());
     } catch (e) {
       emit(FriendsError('Failed to decline friend request: ${e.toString()}'));
+    }
+  }
+  
+  /// Gestisce l'evento RemoveFriendEvent
+  Future<void> _onRemoveFriend(
+    RemoveFriendEvent event,
+    Emitter<FriendsState> emit,
+  ) async {
+    emit(FriendsLoading());
+    try {
+      await _friendRepository.removeFriend(event.friendId);
+      emit(FriendRemoved(event.friendId));
+      
+      // Ricarica la lista degli amici dopo la rimozione
+      add(LoadFriendsEvent());
+    } catch (e) {
+      emit(FriendsError('Impossibile rimuovere l\'amicizia: ${e.toString()}'));
     }
   }
   

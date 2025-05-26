@@ -106,94 +106,129 @@ class _UserProfilePageState extends State<UserProfilePage> {
   Widget _buildActions() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: BlocBuilder<FriendsBloc, FriendsState>(
-        builder: (context, state) {
-          if (state is FriendsLoading) {
+      child: FutureBuilder<bool>(
+        future: context.read<FriendRepository>().isFriendOrPending(widget.userId),
+        builder: (context, snapshot) {
+          // Durante il caricamento
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return ElevatedButton.icon(
-              onPressed: null, // Disattivato durante il caricamento
+              onPressed: null,
               icon: const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
+                width: 20, height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
               ),
-              label: const Text('Invio richiesta...'),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 48),
-              ),
+              label: const Text('Verifica stato...'),
+              style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 48)),
             );
-          } else if (state is FriendRequestSent && state.recipientId == widget.userId) {
+          }
+          
+          // Se l'utente è già amico o c'è una richiesta pendente
+          if (snapshot.hasData && snapshot.data == true) {
             return ElevatedButton.icon(
-              onPressed: null, // Disattivato perché già inviata
-              icon: const Icon(Icons.check),
-              label: const Text('Richiesta inviata'),
+              onPressed: () {
+                // Mostra dialog per rimuovere l'amicizia
+                _showRemoveFriendDialog();
+              },
+              icon: const Icon(Icons.check, color: Colors.white),
+              label: const Text('Amici', style: TextStyle(fontSize: 16,color: Colors.white)),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 48),
                 backgroundColor: Colors.green,
               ),
             );
-          } else if (state is FriendsError) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                ElevatedButton.icon(
+          }
+          
+          // Se può inviare richiesta
+          return BlocBuilder<FriendsBloc, FriendsState>(
+            builder: (context, state) {
+              if (state is FriendsLoading) {
+                return ElevatedButton.icon(
+                  onPressed: null, // Disattivato durante il caricamento
+                  icon: const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  ),
+                  label: const Text('Invio richiesta...'),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
+                );
+              } else if (state is FriendRequestSent && state.recipientId == widget.userId) {
+                return ElevatedButton.icon(
+                  onPressed: null, // Disattivato perché già inviata
+                  icon: const Icon(Icons.check),
+                  label: const Text('Richiesta inviata'),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 48),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } else if (state is FriendsError) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        context.read<FriendsBloc>().add(
+                              SendFriendRequestEvent(widget.userId),
+                            );
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Riprova'),
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 48),
+                        backgroundColor: Colors.orange,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        'Errore: ${state.message}',
+                        style: TextStyle(color: Colors.red),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                );
+              } else {
+                return ElevatedButton.icon(
                   onPressed: () {
+                    // Prima mostriamo un indicatore di caricamento
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Row(
+                          children: [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            SizedBox(width: 16),
+                            Text('Invio richiesta di amicizia...'),
+                          ],
+                        ),
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                    
+                    // Poi inviamo la richiesta
                     context.read<FriendsBloc>().add(
                           SendFriendRequestEvent(widget.userId),
                         );
                   },
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Riprova'),
+                  icon: const Icon(Icons.person_add),
+                  label: const Text('Aggiungi agli amici'),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 48),
-                    backgroundColor: Colors.orange,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    'Errore: ${state.message}',
-                    style: TextStyle(color: Colors.red),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-            );
-          } else {
-            return ElevatedButton.icon(
-              onPressed: () {
-                // Prima mostriamo un indicatore di caricamento
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Row(
-                      children: [
-                        SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                        SizedBox(width: 16),
-                        Text('Invio richiesta di amicizia...'),
-                      ],
-                    ),
-                    duration: Duration(seconds: 1),
                   ),
                 );
-                
-                // Poi inviamo la richiesta
-                context.read<FriendsBloc>().add(
-                      SendFriendRequestEvent(widget.userId),
-                    );
-              },
-              icon: const Icon(Icons.person_add),
-              label: const Text('Aggiungi agli amici'),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 48),
-              ),
-            );
-          }
+              }
+            },
+          );
         },
       ),
     );
@@ -266,5 +301,49 @@ class _UserProfilePageState extends State<UserProfilePage> {
         ],
       ),
     );
+  }
+
+  /// Mostra una finestra di dialogo per confermare la rimozione dell'amicizia
+  void _showRemoveFriendDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rimuovere amicizia'),
+        content: const Text('Sei sicuro di voler rimuovere questa persona dalla tua lista amici?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Chiude la dialog
+            },
+            child: const Text('Annulla'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            onPressed: () {
+              // Qui implementeremo la rimozione dell'amicizia
+              _removeFriendship();
+              Navigator.of(context).pop(); // Chiude la dialog
+            },
+            child: const Text('Rimuovi'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Rimuove l'amicizia con l'utente corrente
+  void _removeFriendship() {
+    // Avviso l'utente che l'operazione è in corso
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Rimozione amicizia in corso...'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+    
+    // Invia l'evento di rimozione amicizia
+    context.read<FriendsBloc>().add(RemoveFriendEvent(widget.userId));
   }
 } 

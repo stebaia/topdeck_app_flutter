@@ -127,6 +127,7 @@ class ServiceLocator {
       Provider<UserSearchBloc>(
         create: (context) => UserSearchBloc(
           context.read<UserSearchRepository>(),
+          context.read<FriendRepository>(),
         ),
         dispose: (_, bloc) => bloc.close(),
       ),

@@ -1,7 +1,10 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:topdeck_app_flutter/routers/app_router.gr.dart';
 
 /// Page to display match details
+@RoutePage()
 class MatchDetailPage extends StatelessWidget {
   /// Match data
   final Map<String, dynamic> match;
@@ -179,6 +182,22 @@ class MatchDetailPage extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
+                      if (!isMatchCompleted)
+                        _buildActionButton(
+                          context,
+                          Icons.edit_note,
+                          'Inserisci risultato',
+                          () {
+                            context.router.push(MatchResultPageRoute(match: match))
+                              .then((value) {
+                                // If result was successfully submitted, refresh the page and return to home with refresh flag
+                                if (value == true) {
+                                  // Return to previous page (e.g. home) with refresh flag
+                                  Navigator.of(context).pop(true);
+                                }
+                              });
+                          },
+                        ),
                       _buildActionButton(
                         context,
                         Icons.replay,

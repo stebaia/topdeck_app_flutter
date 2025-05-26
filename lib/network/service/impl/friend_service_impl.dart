@@ -12,21 +12,46 @@ class FriendServiceImpl extends BaseServiceImpl {
     try {
       print('Invoking edge function send-friend-request with recipient_id: $recipientId');
       
-      // Ottieni la sessione corrente per avere il token di accesso
+      // Get JWT token
       final session = await supabase.auth.currentSession;
-      
       if (session == null || session.accessToken.isEmpty) {
         print('No valid session found, cannot authenticate with Edge Function');
         throw Exception('User not authenticated or session expired');
       }
+
+      // Prima verifichiamo se esiste già un'amicizia o una richiesta pendente
+      final currentUserId = supabase.auth.currentUser?.id;
+      if (currentUserId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      print('Checking if friendship already exists between $currentUserId and $recipientId');
       
-      // Configura l'header di autorizzazione
+      // Cerca se c'è già un'amicizia accettata o una richiesta pendente
+      final existingRelations = await client
+          .from(tableName)
+          .select()
+          .or('and(user_id.eq.$currentUserId,friend_id.eq.$recipientId),and(user_id.eq.$recipientId,friend_id.eq.$currentUserId)')
+          .or('status.eq.accepted,status.eq.pending');
+      
+      print('Existing relations: $existingRelations');
+      
+      if (existingRelations.isNotEmpty) {
+        final status = existingRelations[0]['status'];
+        if (status == 'accepted') {
+          throw Exception('Questo utente è già tuo amico');
+        } else if (status == 'pending') {
+          throw Exception('Esiste già una richiesta di amicizia pendente con questo utente');
+        }
+      }
+      
+      // Use explicit Authorization header
       final headers = {
         'Authorization': 'Bearer ${session.accessToken}',
-        'Content-Type': 'application/json'
       };
       
-      print('Using access token for authorization (first 10 chars): ${session.accessToken.substring(0, 10)}...');
+      // Print header info for debugging
+      print('Using authorization header: ${headers['Authorization']?.substring(0, 15)}...');
       
       final response = await supabase.functions.invoke(
         'send-friend-request',
@@ -35,13 +60,33 @@ class FriendServiceImpl extends BaseServiceImpl {
       );
       
       print('Edge function response status: ${response.status}');
+      print('Edge function response data type: ${response.data.runtimeType}');
       print('Edge function response data: ${response.data}');
       
       if (response.status != 200) {
-        throw Exception(response.data['error'] ?? 'Failed to send friend request');
+        throw Exception(response.data is Map 
+          ? response.data['error'] ?? 'Failed to send friend request'
+          : 'Failed to send friend request: ${response.data}');
       }
       
-      return response.data;
+      // Handle the case where data is a String
+      if (response.data is String) {
+        try {
+          // Try to convert from JSON string to Map if needed
+          print('Converting response data from String to Map');
+          return {'message': response.data};
+        } catch (e) {
+          print('Error converting response data: $e');
+          return {'message': 'Friend request sent', 'raw_response': response.data};
+        }
+      } else if (response.data is Map<String, dynamic>) {
+        // If it's already a Map, return it directly
+        return response.data;
+      } else {
+        // For any other type, create a new Map with the data
+        print('Unexpected response data type: ${response.data.runtimeType}');
+        return {'message': 'Friend request sent', 'raw_response': response.data.toString()};
+      }
     } catch (e) {
       print('Exception in sendFriendRequest: $e');
       throw Exception('Failed to send friend request: $e');
@@ -51,23 +96,26 @@ class FriendServiceImpl extends BaseServiceImpl {
   /// Accepts a friend request using the Edge Function
   Future<Map<String, dynamic>> acceptFriendRequest(String friendId) async {
     try {
+      if (friendId.isEmpty) {
+        throw Exception('friendId non può essere vuoto');
+      }
+      
       print('Invoking edge function accept-friend-request with friendId: $friendId');
       
-      // Ottieni la sessione corrente per avere il token di accesso
+      // Get JWT token
       final session = await supabase.auth.currentSession;
-      
       if (session == null || session.accessToken.isEmpty) {
         print('No valid session found, cannot authenticate with Edge Function');
         throw Exception('User not authenticated or session expired');
       }
       
-      // Configura l'header di autorizzazione
+      // Use explicit Authorization header
       final headers = {
         'Authorization': 'Bearer ${session.accessToken}',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       };
       
-      print('Using access token for authorization (first 10 chars): ${session.accessToken.substring(0, 10)}...');
+      print('Sending request with friendId: $friendId');
       
       final response = await supabase.functions.invoke(
         'accept-friend-request',
@@ -76,13 +124,33 @@ class FriendServiceImpl extends BaseServiceImpl {
       );
       
       print('Edge function response status: ${response.status}');
+      print('Edge function response data type: ${response.data.runtimeType}');
       print('Edge function response data: ${response.data}');
       
       if (response.status != 200) {
-        throw Exception(response.data['error'] ?? 'Failed to accept friend request');
+        throw Exception(response.data is Map 
+          ? response.data['error'] ?? 'Failed to accept friend request'
+          : 'Failed to accept friend request: ${response.data}');
       }
       
-      return response.data;
+      // Handle the case where data is a String
+      if (response.data is String) {
+        try {
+          // Try to convert from JSON string to Map if needed
+          print('Converting response data from String to Map');
+          return {'message': response.data};
+        } catch (e) {
+          print('Error converting response data: $e');
+          return {'message': 'Friend request accepted', 'raw_response': response.data};
+        }
+      } else if (response.data is Map<String, dynamic>) {
+        // If it's already a Map, return it directly
+        return response.data;
+      } else {
+        // For any other type, create a new Map with the data
+        print('Unexpected response data type: ${response.data.runtimeType}');
+        return {'message': 'Friend request accepted', 'raw_response': response.data.toString()};
+      }
     } catch (e) {
       print('Exception in acceptFriendRequest: $e');
       throw Exception('Failed to accept friend request: $e');
@@ -99,6 +167,7 @@ class FriendServiceImpl extends BaseServiceImpl {
     
     print('Fetching friend requests for user: $userId');
     try {
+      // Ripristino della query originale che funzionava
       print('Query: SELECT * FROM $tableName WHERE friend_id = $userId AND status = pending');
       final response = await client
           .from(tableName)
@@ -149,33 +218,57 @@ class FriendServiceImpl extends BaseServiceImpl {
     try {
       print('Calling debug-get-friends edge function');
       
-      // Ottieni la sessione corrente per avere il token di accesso
+      // Check if session exists
       final session = await supabase.auth.currentSession;
-      
       if (session == null || session.accessToken.isEmpty) {
         print('No valid session found, cannot authenticate with Edge Function');
         throw Exception('User not authenticated or session expired');
       }
       
-      // Configura l'header di autorizzazione
+      print('Session token: ${session.accessToken}');
+      
+      // EXPLICITLY set Authorization header with Bearer token
       final headers = {
         'Authorization': 'Bearer ${session.accessToken}',
-        'Content-Type': 'application/json'
       };
       
+      print('Headers: $headers');
+      
+      // Call with explicit headers
       final response = await supabase.functions.invoke(
         'debug-get-friends',
         headers: headers,
       );
       
       print('Debug edge function response status: ${response.status}');
+      print('Debug edge function response data type: ${response.data.runtimeType}');
       
       if (response.status != 200) {
-        throw Exception(response.data['error'] ?? 'Failed to debug friend requests');
+        throw Exception(response.data is Map 
+          ? response.data['error'] ?? 'Failed to debug friend requests'
+          : 'Failed to debug friend requests: ${response.data}');
       }
       
       print('Debug data: ${response.data}');
-      return response.data;
+      
+      // Handle the case where data is a String
+      if (response.data is String) {
+        try {
+          // Try to convert from JSON string to Map if needed
+          print('Converting response data from String to Map');
+          return {'message': response.data};
+        } catch (e) {
+          print('Error converting response data: $e');
+          return {'message': 'Debug info retrieved', 'raw_response': response.data};
+        }
+      } else if (response.data is Map<String, dynamic>) {
+        // If it's already a Map, return it directly
+        return response.data;
+      } else {
+        // For any other type, create a new Map with the data
+        print('Unexpected response data type: ${response.data.runtimeType}');
+        return {'message': 'Debug info retrieved', 'raw_response': response.data.toString()};
+      }
     } catch (e) {
       print('Exception in debugGetFriends: $e');
       throw Exception('Failed to debug friend requests: $e');

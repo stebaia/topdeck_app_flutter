@@ -1,10 +1,14 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:topdeck_app_flutter/routers/app_router.gr.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/invitation_list_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/invitation_list_event.dart';
+import 'package:topdeck_app_flutter/ui/match/deck_selection_page.dart';
 
 /// Page to display match invitation details
+@RoutePage()
 class MatchInvitationDetailPage extends StatelessWidget {
   /// Invitation data
   final Map<String, dynamic> invitation;
@@ -55,192 +59,169 @@ class MatchInvitationDetailPage extends StatelessWidget {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dettagli invito'),
+        title: const Text('Dettaglio invito'),
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header card
-              Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(statusIcon, color: statusColor, size: 24),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Stato: $statusText',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: statusColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.person, size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            isReceived ? 'Da: $senderName' : 'A: $receiverName',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          format,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Info invito
-              _buildSectionTitle(context, 'Informazioni invito'),
-              const SizedBox(height: 8),
-              Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      _buildInfoRow(context, 'Data invio', createdAtStr),
-                      if (invitation['notes'] != null) ...[
-                        const Divider(),
-                        _buildInfoRow(context, 'Note', invitation['notes'] ?? ''),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Azioni
-              if (isReceived && status == 'pending')
-                Column(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSectionTitle(context, 'Azioni'),
+                    _buildSectionTitle(context, 'Stato'),
                     const SizedBox(height: 8),
-                    Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  context.read<InvitationListBloc>().add(
-                                    AcceptInvitationEvent(invitation['id']),
-                                  );
-                                  Navigator.pop(context);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                ),
-                                child: const Text(
-                                  'Accetta invito',
-                                  style: TextStyle(fontSize: 16),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () {
-                                  context.read<InvitationListBloc>().add(
-                                    DeclineInvitationEvent(invitation['id']),
-                                  );
-                                  Navigator.pop(context);
-                                },
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Colors.red),
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                ),
-                                child: const Text(
-                                  'Rifiuta invito',
-                                  style: TextStyle(color: Colors.red, fontSize: 16),
-                                ),
-                              ),
-                            ),
-                          ],
+                    Row(
+                      children: [
+                        Icon(statusIcon, color: statusColor),
+                        const SizedBox(width: 8),
+                        Text(
+                          statusText,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: statusColor,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
-            ],
-          ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle(context, 'Dettagli'),
+                    const SizedBox(height: 8),
+                    _buildDetailRow('Formato', format),
+                    _buildDetailRow('Data invito', createdAtStr),
+                    if (invitation['message'] != null && invitation['message'].toString().isNotEmpty)
+                      _buildDetailRow('Messaggio', invitation['message']),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle(context, 'Partecipanti'),
+                    const SizedBox(height: 8),
+                    _buildDetailRow(isReceived ? 'Invitante' : 'Tu', senderName),
+                    _buildDetailRow(isReceived ? 'Tu' : 'Invitato', receiverName),
+                  ],
+                ),
+              ),
+            ),
+            
+            if (isReceived && status == 'pending')
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionTitle(context, 'Azioni'),
+                  const SizedBox(height: 8),
+                  Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                context.pushRoute(DeckSelectionPageRoute(invitation: invitation));
+                                // Invece di accettare direttamente, andiamo alla pagina di selezione del mazzo
+                                
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              child: const Text(
+                                'Accetta invito',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                context.read<InvitationListBloc>().add(
+                                  DeclineInvitationEvent(invitation['id']),
+                                );
+                                Navigator.pop(context);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              child: const Text(
+                                'Rifiuta invito',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+          ],
         ),
       ),
     );
   }
   
   Widget _buildSectionTitle(BuildContext context, String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: Text(
-        title,
-        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: Theme.of(context).primaryColor,
       ),
     );
   }
   
-  Widget _buildInfoRow(BuildContext context, String label, String value) {
+  Widget _buildDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontWeight: FontWeight.w500,
-              color: Colors.grey,
+          SizedBox(
+            width: 100,
+            child: Text(
+              '$label:',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
+          Expanded(
+            child: Text(value),
           ),
         ],
       ),

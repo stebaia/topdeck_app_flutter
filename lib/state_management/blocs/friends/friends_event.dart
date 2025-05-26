@@ -48,5 +48,17 @@ class DeclineFriendRequestEvent extends FriendsEvent {
   List<Object?> get props => [friendId];
 }
 
+/// Evento per rimuovere un amico
+class RemoveFriendEvent extends FriendsEvent {
+  /// ID dell'amico da rimuovere
+  final String friendId;
+  
+  /// Costruttore
+  RemoveFriendEvent(this.friendId);
+  
+  @override
+  List<Object?> get props => [friendId];
+}
+
 /// Evento per il debug delle amicizie
 class DebugFriendshipsEvent extends FriendsEvent {} 

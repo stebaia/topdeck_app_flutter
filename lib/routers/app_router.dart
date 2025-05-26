@@ -50,8 +50,18 @@ class AppRouter extends RootStackRouter{
       guards: [AuthGuard()],
     ),
     AutoRoute(
-      page: DeckSelectionPageRoute.page,
+      page: MatchInvitationDetailPageRoute.page,
+      path: '/match-wizard/invitation',
+      guards: [AuthGuard()],
+    ),
+    AutoRoute(
+      page: DeckSelectionWizardPageRoute.page,
       path: '/match-wizard/deck',
+      guards: [AuthGuard()],
+    ),
+    AutoRoute(
+      page: DeckSelectionPageRoute.page,
+      path: '/match-wizard/deck-selection',
       guards: [AuthGuard()],
     ),
     AutoRoute(
@@ -62,6 +72,18 @@ class AppRouter extends RootStackRouter{
     AutoRoute(
       page: MatchResultsPageRoute.page,
       path: '/match-wizard/results',
+      guards: [AuthGuard()],
+    ),
+    
+    // Match pages
+    AutoRoute(
+      page: MatchDetailPageRoute.page,
+      path: '/match/detail',
+      guards: [AuthGuard()],
+    ),
+    AutoRoute(
+      page: MatchResultPageRoute.page,
+      path: '/match/result',
       guards: [AuthGuard()],
     ),
     

@@ -74,6 +74,18 @@ class FriendRequestDeclined extends FriendsState {
   List<Object?> get props => [friendId];
 }
 
+/// Stato che rappresenta un'amicizia rimossa
+class FriendRemoved extends FriendsState {
+  /// ID dell'amico rimosso
+  final String friendId;
+  
+  /// Costruttore
+  FriendRemoved(this.friendId);
+  
+  @override
+  List<Object?> get props => [friendId];
+}
+
 /// Stato che rappresenta un errore
 class FriendsError extends FriendsState {
   /// Messaggio di errore

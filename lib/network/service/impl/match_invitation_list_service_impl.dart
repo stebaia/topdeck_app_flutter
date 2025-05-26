@@ -44,26 +44,59 @@ class MatchInvitationListServiceImpl {
     }
   }
 
-  /// Accept an invitation
-  Future<Map<String, dynamic>> acceptInvitation(String invitationId) async {
+  /// Accept an invitation with a selected deck
+  Future<Map<String, dynamic>> acceptInvitation(String invitationId, {String? selectedDeckId}) async {
     try {
+      print('Trying to accept invitation: $invitationId with deck: $selectedDeckId');
+      
       final response = await client.functions.invoke(
-        'accept-match-invitation',
+        'hyper-api',
         body: {
           'invitation_id': invitationId,
+          'selected_deck_id': selectedDeckId,
         },
       );
 
       if (response.status != 200) {
-        throw Exception('Failed to accept invitation: ${response.data}');
+        throw Exception('Failed to accept invitation via Edge Function: ${response.data}');
       }
 
-      // Recupera l'invito aggiornato
-      final updatedInvitation = await _getInvitationById(invitationId);
-      return updatedInvitation;
+      print('Successfully accepted invitation and created match: ${response.data}');
+      
+      // Se tutto è andato bene, ritorniamo i dati completi della risposta
+      return response.data;
     } catch (e) {
       print('Error in acceptInvitation: $e');
-      throw Exception('Failed to accept invitation: ${e.toString()}');
+      
+      // Se l'Edge Function fallisce, tentiamo di aggiornare solo lo stato dell'invito direttamente
+      try {
+        final currentUser = client.auth.currentUser;
+        if (currentUser == null) {
+          throw Exception('User not authenticated');
+        }
+        
+        // Verifica che l'invito appartenga all'utente
+        final invitation = await client
+          .from('match_invitations')
+          .select()
+          .eq('id', invitationId)
+          .eq('receiver_id', currentUser.id)
+          .single();
+        
+        // Aggiorna lo stato dell'invito
+        await client
+          .from('match_invitations')
+          .update({'status': 'accepted'})
+          .eq('id', invitationId);
+        
+        // Ottieni l'invito aggiornato
+        final updatedInvitation = await _getInvitationById(invitationId);
+        print('Successfully accepted invitation directly in DB (fallback)');
+        return {'invitation': updatedInvitation, 'message': 'Invitation accepted but match was not created'};
+      } catch (dbError) {
+        print('Complete failure in accepting invitation: $dbError');
+        throw Exception('Failed to accept invitation: ${e.toString()}');
+      }
     }
   }
 
