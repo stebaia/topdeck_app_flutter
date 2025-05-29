@@ -152,4 +152,11 @@ class AuthServiceImpl {
     await client.auth
         .resetPasswordForEmail(email, redirectTo: 'topdeck://password-reset');
   }
+
+  /// Confirm new password
+  Future<void> confirmNewPassword({required String password}) async {
+    await client.auth.updateUser(
+      UserAttributes(password: password),
+    );
+  }
 }

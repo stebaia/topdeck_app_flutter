@@ -7,6 +7,7 @@ import 'package:app_links/app_links.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeSupabase();
+  await AppLinkService.instance.checkInitialLink();
   await AppLinkService.instance.initialize();
   runApp(const App());
 }

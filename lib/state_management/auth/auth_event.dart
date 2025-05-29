@@ -150,3 +150,11 @@ class RecoveryPasswordEvent extends AuthEvent {
 
   const RecoveryPasswordEvent({required this.email});
 }
+
+class ConfirmNewPasswordEvent extends AuthEvent {
+  final String password;
+  final String confirmPassword;
+
+  const ConfirmNewPasswordEvent(
+      {required this.password, required this.confirmPassword});
+}

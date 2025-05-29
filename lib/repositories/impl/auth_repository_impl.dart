@@ -121,4 +121,11 @@ class AuthRepositoryImpl implements AuthRepository {
     await _authService.recoveryPassword(
         email: email, redirectTo: 'topdeck://password-reset');
   }
+
+  @override
+  Future<void> confirmNewPassword({required String password}) async {
+    await _authService.confirmNewPassword(
+      password: password,
+    );
+  }
 }

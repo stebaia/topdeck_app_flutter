@@ -25,6 +25,8 @@ abstract class AuthRepository {
 
   Future<void> recoveryPassword({required String email});
 
+  Future<void> confirmNewPassword({required String password});
+
   /// Sign in with Google OAuth
   Future<bool> signInWithGoogle();
 

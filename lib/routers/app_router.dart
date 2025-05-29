@@ -93,5 +93,9 @@ class AppRouter extends RootStackRouter {
           path: '/user/:userId',
           guards: [AuthGuard()],
         ),
+        AutoRoute(
+          page: ConfirmNewPasswordPageRoute.page,
+          path: '/confirm-new-password',
+        ),
       ];
 }

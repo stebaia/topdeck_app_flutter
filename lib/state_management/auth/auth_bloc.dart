@@ -7,6 +7,7 @@ import 'package:topdeck_app_flutter/repositories/auth_repository.dart';
 import 'package:topdeck_app_flutter/repositories/profile_repository.dart';
 import 'package:topdeck_app_flutter/state_management/auth/auth_event.dart';
 import 'package:topdeck_app_flutter/state_management/auth/auth_state.dart';
+import 'package:topdeck_app_flutter/utils/password_validator.dart';
 
 /// BLoC for managing authentication state
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
@@ -35,6 +36,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<ResetPasswordEvent>(_onResetPassword);
     on<UpdatePasswordEvent>(_onUpdatePassword);
     on<RecoveryPasswordEvent>(_onRecoveryPassword);
+    on<ConfirmNewPasswordEvent>(_onConfirmNewPassword);
 
     // Facciamo un check immediato dell'autenticazione
     _checkAuthStatus();
@@ -51,6 +53,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       } else if (event.event == supabase.AuthChangeEvent.signedOut) {
         _logger.i('User signed out');
         emit(UnauthenticatedState());
+      } else if (event.event == supabase.AuthChangeEvent.passwordRecovery) {
+        _logger.i('Password reset');
+        emit(AuthPasswordResetState());
       }
     }, onError: (error) {
       _logger.e('Error in auth state subscription: $error');
@@ -105,7 +110,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onSignUp(SignUpEvent event, Emitter<AuthState> emit) async {
     try {
       emit(AuthLoadingState());
-
+      if (event.password.isEmpty ||
+          PasswordValidator.validate(event.password).isValid) {
+        emit(AuthErrorState(message: 'Password non valida'));
+        return;
+      }
       final profile = await _authRepository.signUp(
         email: event.email,
         password: event.password,
@@ -415,6 +424,38 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } catch (e) {
       _logger.e('Error during recovery password: $e');
       emit(AuthErrorState(message: 'Password recovery failed: $e'));
+    }
+  }
+
+  Future<void> _onConfirmNewPassword(
+      ConfirmNewPasswordEvent event, Emitter<AuthState> emit) async {
+    try {
+      emit(ConfirmNewPasswordState());
+
+      // Valida la password usando il nostro validatore
+      final validationResult = PasswordValidator.validate(event.password);
+
+      if (!validationResult.isValid) {
+        // Se la password non è valida, emetti un errore con i dettagli
+        final errorMessage = validationResult.errorMessages.join('\n');
+        emit(ConfirmNewPasswordErrorState(message: errorMessage));
+        return;
+      }
+
+      // Controlla se le password corrispondono
+      if (!PasswordValidator.passwordsMatch(
+          event.password, event.confirmPassword)) {
+        emit(ConfirmNewPasswordMismatchErrorState());
+        return;
+      }
+
+      // Se tutto è valido, procedi con l'aggiornamento della password
+      await _authRepository.confirmNewPassword(password: event.password);
+      emit(ConfirmNewPasswordSuccessState());
+    } catch (e) {
+      _logger.e('Error during confirm new password: $e');
+      emit(ConfirmNewPasswordErrorState(
+          message: 'Errore durante la conferma della nuova password: $e'));
     }
   }
 }
