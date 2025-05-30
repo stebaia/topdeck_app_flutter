@@ -17,6 +17,9 @@ Tournament _$TournamentFromJson(Map<String, dynamic> json) => Tournament(
           : DateTime.parse(json['created_at'] as String),
       status: $enumDecodeNullable(_$TournamentStatusEnumMap, json['status']) ??
           TournamentStatus.upcoming,
+      isPublic: json['is_public'] as bool? ?? true,
+      maxParticipants: (json['max_participants'] as num?)?.toInt(),
+      inviteCode: json['invite_code'] as String?,
     );
 
 Map<String, dynamic> _$TournamentToJson(Tournament instance) =>
@@ -28,6 +31,9 @@ Map<String, dynamic> _$TournamentToJson(Tournament instance) =>
       'created_by': instance.createdBy,
       'created_at': instance.createdAt?.toIso8601String(),
       'status': _$TournamentStatusEnumMap[instance.status]!,
+      'is_public': instance.isPublic,
+      'max_participants': instance.maxParticipants,
+      'invite_code': instance.inviteCode,
     };
 
 const _$TournamentStatusEnumMap = {

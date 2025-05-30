@@ -63,4 +63,32 @@ class TournamentRepositoryImpl implements TournamentRepository {
     final json = await _service.updateStatus(id, status);
     return Tournament.fromJson(json);
   }
+
+  @override
+  Future<List<Tournament>> findPublicTournaments({String? excludeCreatedBy}) async {
+    final jsonList = await _service.findPublicTournaments(excludeCreatedBy: excludeCreatedBy);
+    return jsonList.map((json) => Tournament.fromJson(json)).toList();
+  }
+
+  @override
+  Future<Tournament?> findByInviteCode(String inviteCode) async {
+    final json = await _service.findByInviteCode(inviteCode);
+    if (json == null) return null;
+    return Tournament.fromJson(json);
+  }
+
+  @override
+  Future<String> generateInviteCode(String tournamentId) async {
+    return await _service.generateInviteCode(tournamentId);
+  }
+
+  @override
+  Future<bool> hasAvailableSpots(String tournamentId) async {
+    return await _service.hasAvailableSpots(tournamentId);
+  }
+
+  @override
+  Future<int> getParticipantCount(String tournamentId) async {
+    return await _service.getParticipantCount(tournamentId);
+  }
 } 

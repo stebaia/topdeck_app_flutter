@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:auto_route/auto_route.dart';
+import 'package:topdeck_app_flutter/ui/tournaments/tournaments_page.dart';
 
 @RoutePage(name: 'TournamentsTabRoute')
 class TournamentsTab extends StatelessWidget {
@@ -7,10 +8,6 @@ class TournamentsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Text('Tournaments Tab'),
-      ),
-    );
+    return const TournamentsPage();
   }
 } 

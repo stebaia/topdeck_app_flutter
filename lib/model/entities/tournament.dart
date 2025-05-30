@@ -38,6 +38,18 @@ class Tournament extends BaseModel {
   /// The status of the tournament
   final TournamentStatus status;
 
+  /// Whether the tournament is public (anyone can join) or private (invite only)
+  @JsonKey(name: 'is_public')
+  final bool isPublic;
+
+  /// Maximum number of participants allowed in the tournament
+  @JsonKey(name: 'max_participants')
+  final int? maxParticipants;
+
+  /// Unique code for joining private tournaments
+  @JsonKey(name: 'invite_code')
+  final String? inviteCode;
+
   /// Constructor
   const Tournament({
     required super.id,
@@ -47,6 +59,9 @@ class Tournament extends BaseModel {
     this.createdBy,
     this.createdAt,
     this.status = TournamentStatus.upcoming,
+    this.isPublic = true,
+    this.maxParticipants,
+    this.inviteCode,
   });
 
   /// Creates a new Tournament instance with a generated UUID
@@ -56,6 +71,9 @@ class Tournament extends BaseModel {
     String? league,
     String? createdBy,
     TournamentStatus status = TournamentStatus.upcoming,
+    bool isPublic = true,
+    int? maxParticipants,
+    String? inviteCode,
   }) {
     return Tournament(
       id: const Uuid().v4(),
@@ -65,6 +83,9 @@ class Tournament extends BaseModel {
       createdBy: createdBy,
       createdAt: DateTime.now(),
       status: status,
+      isPublic: isPublic,
+      maxParticipants: maxParticipants,
+      inviteCode: inviteCode,
     );
   }
 
@@ -83,6 +104,9 @@ class Tournament extends BaseModel {
     String? createdBy,
     DateTime? createdAt,
     TournamentStatus? status,
+    bool? isPublic,
+    int? maxParticipants,
+    String? inviteCode,
   }) {
     return Tournament(
       id: id ?? this.id,
@@ -92,6 +116,9 @@ class Tournament extends BaseModel {
       createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
       status: status ?? this.status,
+      isPublic: isPublic ?? this.isPublic,
+      maxParticipants: maxParticipants ?? this.maxParticipants,
+      inviteCode: inviteCode ?? this.inviteCode,
     );
   }
 } 

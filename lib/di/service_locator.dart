@@ -9,6 +9,8 @@ import 'package:topdeck_app_flutter/network/service/impl/match_service_impl.dart
 import 'package:topdeck_app_flutter/network/service/impl/player_stats_service_impl.dart';
 import 'package:topdeck_app_flutter/network/service/impl/profile_service_impl.dart';
 import 'package:topdeck_app_flutter/network/service/impl/tournament_service_impl.dart';
+import 'package:topdeck_app_flutter/network/service/impl/tournament_participant_service_impl.dart';
+import 'package:topdeck_app_flutter/network/service/impl/tournament_invitation_service_impl.dart';
 import 'package:topdeck_app_flutter/network/service/impl/user_search_service_impl.dart';
 import 'package:topdeck_app_flutter/repositories/auth_repository.dart';
 import 'package:topdeck_app_flutter/repositories/deck_card_repository.dart';
@@ -21,12 +23,17 @@ import 'package:topdeck_app_flutter/repositories/impl/friend_repository_impl.dar
 import 'package:topdeck_app_flutter/repositories/impl/match_repository_impl.dart';
 import 'package:topdeck_app_flutter/repositories/impl/profile_repository_impl.dart';
 import 'package:topdeck_app_flutter/repositories/impl/tournament_repository_impl.dart';
+import 'package:topdeck_app_flutter/repositories/impl/tournament_participant_repository_impl.dart';
+import 'package:topdeck_app_flutter/repositories/impl/tournament_invitation_repository_impl.dart';
 import 'package:topdeck_app_flutter/repositories/impl/user_search_repository_impl.dart';
 import 'package:topdeck_app_flutter/repositories/match_repository.dart';
 import 'package:topdeck_app_flutter/repositories/profile_repository.dart';
 import 'package:topdeck_app_flutter/repositories/tournament_repository.dart';
+import 'package:topdeck_app_flutter/repositories/tournament_participant_repository.dart';
+import 'package:topdeck_app_flutter/repositories/tournament_invitation_repository.dart';
 import 'package:topdeck_app_flutter/repositories/user_search_repository.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/friends/friends_bloc.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/tournament/tournament_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/user_search/user_search_bloc.dart';
 
 /// Service locator for dependency injection
@@ -50,8 +57,16 @@ class ServiceLocator {
       Provider<MatchServiceImpl>(
         create: (_) => MatchServiceImpl(),
       ),
+      Provider<TournamentParticipantServiceImpl>(
+        create: (_) => TournamentParticipantServiceImpl(),
+      ),
       Provider<TournamentServiceImpl>(
-        create: (_) => TournamentServiceImpl(),
+        create: (context) => TournamentServiceImpl(
+          context.read<TournamentParticipantServiceImpl>(),
+        ),
+      ),
+      Provider<TournamentInvitationServiceImpl>(
+        create: (_) => TournamentInvitationServiceImpl(),
       ),
       // Nuovi servizi che utilizzano Edge Functions
       Provider<FriendServiceImpl>(
@@ -97,9 +112,19 @@ class ServiceLocator {
           context.read<MatchServiceImpl>(),
         ),
       ),
+      Provider<TournamentParticipantRepository>(
+        create: (context) => TournamentParticipantRepositoryImpl(
+          context.read<TournamentParticipantServiceImpl>(),
+        ),
+      ),
       Provider<TournamentRepository>(
         create: (context) => TournamentRepositoryImpl(
           context.read<TournamentServiceImpl>(),
+        ),
+      ),
+      Provider<TournamentInvitationRepository>(
+        create: (context) => TournamentInvitationRepositoryImpl(
+          context.read<TournamentInvitationServiceImpl>(),
         ),
       ),
       // Nuovo repository di ricerca utenti
@@ -128,6 +153,14 @@ class ServiceLocator {
         create: (context) => UserSearchBloc(
           context.read<UserSearchRepository>(),
           context.read<FriendRepository>(),
+        ),
+        dispose: (_, bloc) => bloc.close(),
+      ),
+
+      // Bloc per i tornei
+      Provider<TournamentBloc>(
+        create: (context) => TournamentBloc(
+          tournamentRepository: context.read<TournamentRepository>(),
         ),
         dispose: (_, bloc) => bloc.close(),
       ),

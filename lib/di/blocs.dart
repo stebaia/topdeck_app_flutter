@@ -26,6 +26,21 @@ final List<BlocProvider> _blocs = [
     ),
   ),
   
+  // Tournament bloc
+  BlocProvider<TournamentBloc>(
+    create: (context) => TournamentBloc(
+      tournamentRepository: context.read<TournamentRepository>(),
+    ),
+  ),
+  
+  // Tournament operations bloc
+  BlocProvider<TournamentOperationsBloc>(
+    create: (context) => TournamentOperationsBloc(
+      tournamentRepository: context.read<TournamentRepository>(),
+      participantRepository: context.read<TournamentParticipantRepository>(),
+    ),
+  ),
+  
   // Deck management cubit
   BlocProvider<DecksCubit>(
     create: (context) => DecksCubit(

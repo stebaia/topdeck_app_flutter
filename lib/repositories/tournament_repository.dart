@@ -14,4 +14,19 @@ abstract class TournamentRepository extends BaseRepository<Tournament> {
   
   /// Updates the status of a tournament
   Future<Tournament> updateStatus(String id, TournamentStatus status);
+
+  /// Finds public tournaments that are open for registration
+  Future<List<Tournament>> findPublicTournaments({String? excludeCreatedBy});
+
+  /// Finds a tournament by invite code
+  Future<Tournament?> findByInviteCode(String inviteCode);
+
+  /// Generates a unique invite code for a tournament
+  Future<String> generateInviteCode(String tournamentId);
+
+  /// Checks if a tournament has available spots
+  Future<bool> hasAvailableSpots(String tournamentId);
+
+  /// Gets the current participant count for a tournament
+  Future<int> getParticipantCount(String tournamentId);
 } 
