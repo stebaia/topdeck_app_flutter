@@ -8,7 +8,7 @@ import 'package:topdeck_app_flutter/repositories/profile_repository.dart';
 class AuthRepositoryImpl implements AuthRepository {
   /// The authentication service
   final AuthServiceImpl _authService;
-  
+
   /// The profile repository for creating user profiles
   final ProfileRepository _profileRepository;
 
@@ -36,11 +36,11 @@ class AuthRepositoryImpl implements AuthRepository {
         'username': username,
       },
     );
-    
+
     if (authResponse.user == null) {
       throw Exception('Registration failed: User not created');
     }
-    
+
     // Create a profile for the user
     final profile = Profile.create(
       username: username,
@@ -52,10 +52,10 @@ class AuthRepositoryImpl implements AuthRepository {
       stato: stato,
       avatarUrl: avatarUrl,
     );
-    
+
     // Override the UUID with the Supabase Auth user ID
     final profileWithAuthId = profile.copyWith(id: authResponse.user!.id);
-    
+
     // Save the profile in the profiles table
     return await _profileRepository.create(profileWithAuthId);
   }
@@ -115,5 +115,17 @@ class AuthRepositoryImpl implements AuthRepository {
   Stream<AuthState> onAuthStateChange() {
     return _authService.onAuthStateChange();
   }
-  
-} 
+
+  @override
+  Future<void> recoveryPassword({required String email}) async {
+    await _authService.recoveryPassword(
+        email: email, redirectTo: 'topdeck://password-reset');
+  }
+
+  @override
+  Future<void> confirmNewPassword({required String password}) async {
+    await _authService.confirmNewPassword(
+      password: password,
+    );
+  }
+}

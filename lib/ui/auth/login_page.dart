@@ -5,6 +5,7 @@ import 'package:topdeck_app_flutter/routers/app_router.gr.dart';
 import 'package:topdeck_app_flutter/state_management/auth/auth_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/auth/auth_event.dart';
 import 'package:topdeck_app_flutter/state_management/auth/auth_state.dart';
+import 'package:topdeck_app_flutter/ui/auth/recovery_password_page.dart';
 
 @RoutePage()
 class LoginPage extends StatefulWidget {
@@ -53,7 +54,7 @@ class _LoginPageState extends State<LoginPage> {
           );
     }
   }
-  
+
   void _onGoogleLoginPressed() {
     context.read<AuthBloc>().add(SignInWithGoogleNativelyEvent());
   }
@@ -63,20 +64,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _onForgotPasswordPressed() {
-    if (_emailController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter your email first'),
-        ),
-      );
-      return;
-    }
-
-    context.read<AuthBloc>().add(
-          ResetPasswordEvent(
-            email: _emailController.text.trim(),
-          ),
-        );
+    context.pushRoute(RecoveryPasswordPageRoute());
   }
 
   void _navigateToRegister() {
@@ -111,7 +99,8 @@ class _LoginPageState extends State<LoginPage> {
             context.router.replaceNamed('/home');
           } else if (state is GoogleAuthenticatedNeedsProfileState) {
             // Naviga alla pagina di completamento profilo
-            print('Google authentication successful, redirecting to profile completion page...');
+            print(
+                'Google authentication successful, redirecting to profile completion page...');
             context.router.navigate(
               CompleteGoogleProfilePageRoute(
                 userId: state.userId,
@@ -200,7 +189,8 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
-                    onPressed: state is AuthLoadingState ? null : _onLoginPressed,
+                    onPressed:
+                        state is AuthLoadingState ? null : _onLoginPressed,
                     child: Padding(
                       padding: const EdgeInsets.all(12.0),
                       child: state is AuthLoadingState
@@ -214,7 +204,9 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 16),
                   // Google Sign In Button (Nativo)
                   ElevatedButton.icon(
-                    onPressed: state is AuthLoadingState ? null : _onGoogleLoginPressed,
+                    onPressed: state is AuthLoadingState
+                        ? null
+                        : _onGoogleLoginPressed,
                     icon: const Icon(Icons.g_mobiledata, size: 24),
                     label: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12.0),
@@ -233,7 +225,8 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                const Text('Caricamento...', style: TextStyle(fontSize: 16)),
+                                const Text('Caricamento...',
+                                    style: TextStyle(fontSize: 16)),
                               ],
                             )
                           : const Text(
@@ -266,7 +259,6 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ],
                   ),
-                  
                 ],
               ),
             ),
@@ -275,4 +267,4 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-} 
+}

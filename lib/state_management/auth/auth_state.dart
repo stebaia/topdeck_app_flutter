@@ -67,4 +67,46 @@ class GoogleAuthenticatedNeedsProfileState extends AuthState {
 
   @override
   List<Object?> get props => [userId, email, name, avatarUrl];
-} 
+}
+
+class AuthPasswordResetState extends AuthState {
+  const AuthPasswordResetState();
+}
+
+class TryToRecoveryPasswordState extends AuthState {
+  const TryToRecoveryPasswordState();
+}
+
+/// Recovery password state
+class RecoveryPasswordState extends AuthState {
+  const RecoveryPasswordState();
+}
+
+class ConfirmNewPasswordState extends AuthState {
+  const ConfirmNewPasswordState();
+}
+
+class ConfirmNewPasswordSuccessState extends AuthState {
+  const ConfirmNewPasswordSuccessState();
+}
+
+class ConfirmNewPasswordEmptyErrorState extends AuthState {
+  const ConfirmNewPasswordEmptyErrorState();
+}
+
+class ConfirmNewPasswordValidationErrorState extends AuthState {
+  const ConfirmNewPasswordValidationErrorState();
+}
+
+class ConfirmNewPasswordMismatchErrorState extends AuthState {
+  const ConfirmNewPasswordMismatchErrorState();
+}
+
+class ConfirmNewPasswordErrorState extends AuthState {
+  final String? message;
+
+  const ConfirmNewPasswordErrorState({this.message});
+
+  @override
+  List<Object?> get props => [message];
+}
