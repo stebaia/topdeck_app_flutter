@@ -437,8 +437,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       if (!validationResult.isValid) {
         // Se la password non è valida, emetti un errore con i dettagli
-        final errorMessage = validationResult.errorMessages.join('\n');
-        emit(ConfirmNewPasswordErrorState(message: errorMessage));
+
+        emit(ConfirmNewPasswordValidationErrorState());
         return;
       }
 

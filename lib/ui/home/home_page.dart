@@ -15,56 +15,59 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
-    return AutoTabsRouter(
-      routes: const [
-        HomeTabRoute(),
-        TournamentsTabRoute(),
-        FriendsTabRoute(),
-        ProfileTabRoute(),
-      ],
-      transitionBuilder: (context, child, animation) => FadeTransition(
-        opacity: animation,
-        child: child,
+    return PopScope(
+      canPop: false,
+      child: AutoTabsRouter(
+        routes: const [
+          HomeTabRoute(),
+          TournamentsTabRoute(),
+          FriendsTabRoute(),
+          ProfileTabRoute(),
+        ],
+        transitionBuilder: (context, child, animation) => FadeTransition(
+          opacity: animation,
+          child: child,
+        ),
+        builder: (context, child) {
+          final tabsRouter = AutoTabsRouter.of(context);
+          return Scaffold(
+            body: child,
+            floatingActionButton: FloatingActionButton.extended(
+              label: const Text('Crea partita'),
+              onPressed: () {
+                // Navigate to the first step of the match creation wizard
+                context.router.push(const FormatSelectionPageRoute());
+              },
+              icon: const Icon(CupertinoIcons.plus),
+            ),
+            bottomNavigationBar: BottomNavigationBar(
+              type: BottomNavigationBarType.fixed,
+              selectedItemColor: Theme.of(context).primaryColor,
+              unselectedItemColor: Colors.grey,
+              currentIndex: tabsRouter.activeIndex,
+              onTap: tabsRouter.setActiveIndex,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(CupertinoIcons.house),
+                  label: 'Home',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(CupertinoIcons.flowchart),
+                  label: 'Tournaments',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(CupertinoIcons.person_2),
+                  label: 'Friends',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(CupertinoIcons.person),
+                  label: 'Profile',
+                ),
+              ],
+            ),
+          );
+        },
       ),
-      builder: (context, child) {
-        final tabsRouter = AutoTabsRouter.of(context);
-        return Scaffold(
-          body: child,
-          floatingActionButton: FloatingActionButton.extended(
-            label: const Text('Crea partita'),
-            onPressed: () {
-              // Navigate to the first step of the match creation wizard
-              context.router.push(const FormatSelectionPageRoute());
-            },
-            icon: const Icon(CupertinoIcons.plus),
-          ),
-          bottomNavigationBar: BottomNavigationBar(
-            type: BottomNavigationBarType.fixed,
-            selectedItemColor: Theme.of(context).primaryColor,
-            unselectedItemColor: Colors.grey,
-            currentIndex: tabsRouter.activeIndex,
-            onTap: tabsRouter.setActiveIndex,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.house),
-                label: 'Home',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.flowchart),
-                label: 'Tournaments',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.person_2),
-                label: 'Friends',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.person),
-                label: 'Profile',
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

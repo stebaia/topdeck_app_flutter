@@ -74,11 +74,14 @@ class _CorePageState extends State<CorePage> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
+        print('state: $state');
         if (state is AuthenticatedState) {
           // Check if this is a password reset deep link
           if (_isPasswordResetDeepLink()) {
             // If authenticated via password reset deep link, go to password reset page
             context.router.replaceNamed('/confirm-password');
+          } else if (state is AuthPasswordResetState) {
+            context.pushRoute(ConfirmNewPasswordPageRoute());
           } else {
             // If authenticated normally, redirect to home
             context.router.replaceNamed('/home');
@@ -89,6 +92,8 @@ class _CorePageState extends State<CorePage> {
           if (!_isPublicRoute(currentRoute)) {
             // If not authenticated and not on a public route, redirect to login
             context.router.replaceNamed('/login');
+          } else if (state is AuthPasswordResetState) {
+            context.pushRoute(ConfirmNewPasswordPageRoute());
           }
           // If on a public route, stay on current route
         } else if (state is AuthErrorState) {
