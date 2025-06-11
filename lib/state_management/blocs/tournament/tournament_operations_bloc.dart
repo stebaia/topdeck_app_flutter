@@ -48,6 +48,9 @@ class TournamentOperationsBloc extends Bloc<TournamentOperationsEvent, Tournamen
           isPublic: event.isPublic,
           maxParticipants: event.maxParticipants,
           league: event.league,
+          startDate: event.startDate,
+          startTime: event.startTime,
+          description: event.description,
         ),
       );
       

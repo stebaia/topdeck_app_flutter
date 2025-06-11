@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:topdeck_app_flutter/cubit/decks/decks_state.dart';
+import 'package:topdeck_app_flutter/state_management/cubit/decks/decks_state.dart';
 import 'package:topdeck_app_flutter/model/entities/deck.dart';
 import 'package:topdeck_app_flutter/repositories/deck_repository.dart';
 

@@ -201,6 +201,24 @@ class _TournamentDetailsPageState extends State<TournamentDetailsPage> {
                 _inviteCode!,
                 copyable: true,
               ),
+            if (widget.tournament.startDate != null)
+              _buildInfoRow(
+                Icons.event,
+                'Data inizio',
+                _formatDate(widget.tournament.startDate!),
+              ),
+            if (widget.tournament.startTime != null)
+              _buildInfoRow(
+                Icons.access_time,
+                'Ora inizio',
+                widget.tournament.startTime!,
+              ),
+            if (widget.tournament.description != null)
+              _buildInfoRow(
+                Icons.description,
+                'Descrizione',
+                widget.tournament.description!,
+              ),
             if (widget.tournament.createdAt != null)
               _buildInfoRow(
                 Icons.calendar_today,

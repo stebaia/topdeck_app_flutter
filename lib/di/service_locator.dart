@@ -12,10 +12,12 @@ import 'package:topdeck_app_flutter/network/service/impl/tournament_service_impl
 import 'package:topdeck_app_flutter/network/service/impl/tournament_participant_service_impl.dart';
 import 'package:topdeck_app_flutter/network/service/impl/tournament_invitation_service_impl.dart';
 import 'package:topdeck_app_flutter/network/service/impl/user_search_service_impl.dart';
+import 'package:topdeck_app_flutter/network/service/impl/elo_service_impl.dart';
 import 'package:topdeck_app_flutter/repositories/auth_repository.dart';
 import 'package:topdeck_app_flutter/repositories/deck_card_repository.dart';
 import 'package:topdeck_app_flutter/repositories/deck_repository.dart';
 import 'package:topdeck_app_flutter/repositories/friend_repository.dart';
+import 'package:topdeck_app_flutter/repositories/elo_repository.dart';
 import 'package:topdeck_app_flutter/repositories/impl/auth_repository_impl.dart';
 import 'package:topdeck_app_flutter/repositories/impl/deck_card_repository_impl.dart';
 import 'package:topdeck_app_flutter/repositories/impl/deck_repository_impl.dart';
@@ -35,6 +37,7 @@ import 'package:topdeck_app_flutter/repositories/user_search_repository.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/friends/friends_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/tournament/tournament_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/user_search/user_search_bloc.dart';
+import 'package:topdeck_app_flutter/state_management/cubit/elo/elo_cubit.dart';
 
 /// Service locator for dependency injection
 class ServiceLocator {
@@ -68,7 +71,11 @@ class ServiceLocator {
       Provider<TournamentInvitationServiceImpl>(
         create: (_) => TournamentInvitationServiceImpl(),
       ),
-      // Nuovi servizi che utilizzano Edge Functions
+      // ELO Service using Edge Functions
+      Provider<EloServiceImpl>(
+        create: (_) => EloServiceImpl(),
+      ),
+      // Altri servizi che utilizzano Edge Functions
       Provider<FriendServiceImpl>(
         create: (_) => FriendServiceImpl(),
       ),
@@ -94,6 +101,12 @@ class ServiceLocator {
         create: (context) => AuthRepositoryImpl(
           context.read<AuthServiceImpl>(),
           context.read<ProfileRepository>(),
+        ),
+      ),
+      // ELO Repository
+      Provider<EloRepository>(
+        create: (context) => EloRepository(
+          eloService: context.read<EloServiceImpl>(),
         ),
       ),
       // Other repositories
@@ -140,7 +153,7 @@ class ServiceLocator {
         ),
       ),
       
-      // Blocs
+      // Blocs & Cubits
       Provider<FriendsBloc>(
         create: (context) => FriendsBloc(
           friendRepository: context.read<FriendRepository>(),
@@ -163,6 +176,14 @@ class ServiceLocator {
           tournamentRepository: context.read<TournamentRepository>(),
         ),
         dispose: (_, bloc) => bloc.close(),
+      ),
+
+      // ELO Cubit
+      Provider<EloCubit>(
+        create: (context) => EloCubit(
+          eloRepository: context.read<EloRepository>(),
+        ),
+        dispose: (_, cubit) => cubit.close(),
       ),
     ];
   }

@@ -20,6 +20,17 @@ Tournament _$TournamentFromJson(Map<String, dynamic> json) => Tournament(
       isPublic: json['is_public'] as bool? ?? true,
       maxParticipants: (json['max_participants'] as num?)?.toInt(),
       inviteCode: json['invite_code'] as String?,
+      startDate: json['start_date'] == null
+          ? null
+          : DateTime.parse(json['start_date'] as String),
+      startTime: json['start_time'] as String?,
+      description: json['description'] as String?,
+      currentRound: (json['current_round'] as num?)?.toInt() ?? 0,
+      totalRounds: (json['total_rounds'] as num?)?.toInt(),
+      roundTimerEnd: json['round_timer_end'] == null
+          ? null
+          : DateTime.parse(json['round_timer_end'] as String),
+      roundTimeMinutes: (json['round_time_minutes'] as num?)?.toInt() ?? 50,
     );
 
 Map<String, dynamic> _$TournamentToJson(Tournament instance) =>
@@ -34,6 +45,13 @@ Map<String, dynamic> _$TournamentToJson(Tournament instance) =>
       'is_public': instance.isPublic,
       'max_participants': instance.maxParticipants,
       'invite_code': instance.inviteCode,
+      'start_date': instance.startDate?.toIso8601String(),
+      'start_time': instance.startTime,
+      'description': instance.description,
+      'current_round': instance.currentRound,
+      'total_rounds': instance.totalRounds,
+      'round_timer_end': instance.roundTimerEnd?.toIso8601String(),
+      'round_time_minutes': instance.roundTimeMinutes,
     };
 
 const _$TournamentStatusEnumMap = {

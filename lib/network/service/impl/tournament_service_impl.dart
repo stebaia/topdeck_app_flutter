@@ -47,7 +47,47 @@ class TournamentServiceImpl extends BaseServiceImpl {
     return response;
   }
 
-  /// Finds public tournaments that are open for registration
+  /// Finds public tournaments that are open for registration using edge function
+  Future<List<Map<String, dynamic>>> findPublicTournamentsWithTimeFiltering({
+    String? excludeCreatedBy,
+    bool includeExpired = false,
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    try {
+      final response = await client.functions.invoke(
+        'tournament-helpers/tournaments-with-time',
+        body: {},
+        queryParameters: {
+          'status': 'upcoming',
+          'includeExpired': includeExpired.toString(),
+          'limit': limit.toString(),
+          'offset': offset.toString(),
+        },
+      );
+
+      if (response.data != null && response.data['tournaments'] != null) {
+        List<Map<String, dynamic>> tournaments = 
+            List<Map<String, dynamic>>.from(response.data['tournaments']);
+        
+        // Exclude tournaments created by specific user if provided
+        if (excludeCreatedBy != null) {
+          tournaments = tournaments
+              .where((t) => t['created_by'] != excludeCreatedBy)
+              .toList();
+        }
+        
+        return tournaments;
+      }
+      
+      return [];
+    } catch (e) {
+      // Fallback to original method if edge function fails
+      return await findPublicTournaments(excludeCreatedBy: excludeCreatedBy);
+    }
+  }
+
+  /// Original method for finding public tournaments (fallback)
   Future<List<Map<String, dynamic>>> findPublicTournaments({String? excludeCreatedBy}) async {
     var query = client.from(tableName)
         .select()
@@ -61,6 +101,31 @@ class TournamentServiceImpl extends BaseServiceImpl {
     
     final response = await query.order('created_at', ascending: false);
     return response;
+  }
+
+  /// Check tournament status and auto-update if needed
+  Future<Map<String, dynamic>> checkTournamentStatus(String tournamentId) async {
+    try {
+      final response = await client.functions.invoke(
+        'tournament-helpers/tournament-status-check',
+        body: {'tournament_id': tournamentId},
+      );
+
+      return response.data;
+    } catch (e) {
+      // Fallback to manual check
+      final tournament = await client.from(tableName)
+          .select()
+          .eq('id', tournamentId)
+          .single();
+      
+      return {
+        'tournament_id': tournamentId,
+        'current_status': tournament['status'],
+        'status_updated': false,
+        'error': 'Edge function unavailable, using fallback'
+      };
+    }
   }
 
   /// Finds a tournament by invite code

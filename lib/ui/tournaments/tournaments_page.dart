@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:topdeck_app_flutter/model/entities/tournament.dart';
+import 'package:topdeck_app_flutter/repositories/tournament_participant_repository.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/auth/auth_bloc.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/auth/auth_state.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/tournament/tournament_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/tournament/tournament_operations_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/tournament/tournament_event.dart';
@@ -334,9 +337,39 @@ class _TournamentsPageState extends State<TournamentsPage>
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 if (isPublic && tournament.status == TournamentStatus.upcoming)
-                  ElevatedButton(
-                    onPressed: () => _joinTournament(tournament.id),
-                    child: const Text('Unisciti'),
+                  FutureBuilder<bool>(
+                    future: _isUserAlreadyJoined(tournament.id),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        );
+                      }
+                      
+                      final isAlreadyJoined = snapshot.data ?? false;
+                      
+                      if (isAlreadyJoined) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.green),
+                          ),
+                          child: const Text(
+                            'Già iscritto',
+                            style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+                          ),
+                        );
+                      }
+                      
+                      return ElevatedButton(
+                        onPressed: () => _joinTournament(tournament.id),
+                        child: const Text('Unisciti'),
+                      );
+                    },
                   ),
                 if (!isPublic) ...[
                   TextButton(
@@ -422,6 +455,21 @@ class _TournamentsPageState extends State<TournamentsPage>
       context.read<TournamentBloc>().add(LoadPublicTournamentsEvent());
     } else {
       context.read<TournamentBloc>().add(LoadMyTournamentsEvent());
+    }
+  }
+
+  Future<bool> _isUserAlreadyJoined(String tournamentId) async {
+    try {
+      final authState = context.read<AuthBloc>().state;
+      if (authState is! AuthenticatedState) {
+        return false;
+      }
+
+      return await context
+          .read<TournamentParticipantRepository>()
+          .isUserParticipating(tournamentId, authState.profile.id);
+    } catch (e) {
+      return false;
     }
   }
 

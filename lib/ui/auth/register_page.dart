@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:auto_route/auto_route.dart';
-import 'package:topdeck_app_flutter/state_management/auth/auth_bloc.dart';
-import 'package:topdeck_app_flutter/state_management/auth/auth_event.dart';
-import 'package:topdeck_app_flutter/state_management/auth/auth_state.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/auth/auth_bloc.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/auth/auth_event.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/auth/auth_state.dart';
 
 @RoutePage()
 class RegisterPage extends StatefulWidget {

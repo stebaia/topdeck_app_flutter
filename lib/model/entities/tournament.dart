@@ -50,6 +50,33 @@ class Tournament extends BaseModel {
   @JsonKey(name: 'invite_code')
   final String? inviteCode;
 
+  /// The date when the tournament is scheduled to start
+  @JsonKey(name: 'start_date')
+  final DateTime? startDate;
+
+  /// The time when the tournament is scheduled to start (stored as string in HH:MM format)
+  @JsonKey(name: 'start_time')
+  final String? startTime;
+
+  /// Detailed description of the tournament
+  final String? description;
+
+  /// Current round number (0 = not started)
+  @JsonKey(name: 'current_round')
+  final int currentRound;
+
+  /// Total number of rounds for this tournament
+  @JsonKey(name: 'total_rounds')
+  final int? totalRounds;
+
+  /// When the current round timer ends
+  @JsonKey(name: 'round_timer_end')
+  final DateTime? roundTimerEnd;
+
+  /// Duration of each round in minutes
+  @JsonKey(name: 'round_time_minutes')
+  final int roundTimeMinutes;
+
   /// Constructor
   const Tournament({
     required super.id,
@@ -62,6 +89,13 @@ class Tournament extends BaseModel {
     this.isPublic = true,
     this.maxParticipants,
     this.inviteCode,
+    this.startDate,
+    this.startTime,
+    this.description,
+    this.currentRound = 0,
+    this.totalRounds,
+    this.roundTimerEnd,
+    this.roundTimeMinutes = 50,
   });
 
   /// Creates a new Tournament instance with a generated UUID
@@ -74,6 +108,13 @@ class Tournament extends BaseModel {
     bool isPublic = true,
     int? maxParticipants,
     String? inviteCode,
+    DateTime? startDate,
+    String? startTime,
+    String? description,
+    int currentRound = 0,
+    int? totalRounds,
+    DateTime? roundTimerEnd,
+    int roundTimeMinutes = 50,
   }) {
     return Tournament(
       id: const Uuid().v4(),
@@ -86,6 +127,13 @@ class Tournament extends BaseModel {
       isPublic: isPublic,
       maxParticipants: maxParticipants,
       inviteCode: inviteCode,
+      startDate: startDate,
+      startTime: startTime,
+      description: description,
+      currentRound: currentRound,
+      totalRounds: totalRounds,
+      roundTimerEnd: roundTimerEnd,
+      roundTimeMinutes: roundTimeMinutes,
     );
   }
 
@@ -94,6 +142,62 @@ class Tournament extends BaseModel {
 
   @override
   Map<String, dynamic> toJson() => _$TournamentToJson(this);
+
+  /// Get the combined start DateTime from startDate and startTime
+  DateTime? get startDateTime {
+    if (startDate == null || startTime == null) return null;
+    
+    // Parse time from HH:MM format
+    final timeParts = startTime!.split(':');
+    if (timeParts.length != 2) return null;
+    
+    final hour = int.tryParse(timeParts[0]);
+    final minute = int.tryParse(timeParts[1]);
+    
+    if (hour == null || minute == null) return null;
+    
+    return DateTime(
+      startDate!.year,
+      startDate!.month,
+      startDate!.day,
+      hour,
+      minute,
+    );
+  }
+
+  /// Check if tournament is scheduled for today
+  bool get isToday {
+    if (startDate == null) return false;
+    final now = DateTime.now();
+    return startDate!.year == now.year &&
+           startDate!.month == now.month &&
+           startDate!.day == now.day;
+  }
+
+  /// Check if tournament is scheduled for tomorrow
+  bool get isTomorrow {
+    if (startDate == null) return false;
+    final tomorrow = DateTime.now().add(const Duration(days: 1));
+    return startDate!.year == tomorrow.year &&
+           startDate!.month == tomorrow.month &&
+           startDate!.day == tomorrow.day;
+  }
+
+  /// Check if tournament has already started
+  bool get hasStarted {
+    final startDT = startDateTime;
+    if (startDT == null) return false;
+    return DateTime.now().isAfter(startDT);
+  }
+
+  /// Check if tournament should be starting soon (within 30 minutes)
+  bool get isStartingSoon {
+    final startDT = startDateTime;
+    if (startDT == null) return false;
+    final now = DateTime.now();
+    return startDT.isAfter(now) && 
+           startDT.difference(now).inMinutes <= 30;
+  }
 
   @override
   Tournament copyWith({
@@ -107,6 +211,13 @@ class Tournament extends BaseModel {
     bool? isPublic,
     int? maxParticipants,
     String? inviteCode,
+    DateTime? startDate,
+    String? startTime,
+    String? description,
+    int? currentRound,
+    int? totalRounds,
+    DateTime? roundTimerEnd,
+    int? roundTimeMinutes,
   }) {
     return Tournament(
       id: id ?? this.id,
@@ -119,6 +230,13 @@ class Tournament extends BaseModel {
       isPublic: isPublic ?? this.isPublic,
       maxParticipants: maxParticipants ?? this.maxParticipants,
       inviteCode: inviteCode ?? this.inviteCode,
+      startDate: startDate ?? this.startDate,
+      startTime: startTime ?? this.startTime,
+      description: description ?? this.description,
+      currentRound: currentRound ?? this.currentRound,
+      totalRounds: totalRounds ?? this.totalRounds,
+      roundTimerEnd: roundTimerEnd ?? this.roundTimerEnd,
+      roundTimeMinutes: roundTimeMinutes ?? this.roundTimeMinutes,
     );
   }
 } 

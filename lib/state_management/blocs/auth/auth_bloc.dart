@@ -5,8 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:topdeck_app_flutter/model/entities/profile.dart';
 import 'package:topdeck_app_flutter/repositories/auth_repository.dart';
 import 'package:topdeck_app_flutter/repositories/profile_repository.dart';
-import 'package:topdeck_app_flutter/state_management/auth/auth_event.dart';
-import 'package:topdeck_app_flutter/state_management/auth/auth_state.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/auth/auth_event.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/auth/auth_state.dart';
 import 'package:topdeck_app_flutter/utils/password_validator.dart';
 
 /// BLoC for managing authentication state

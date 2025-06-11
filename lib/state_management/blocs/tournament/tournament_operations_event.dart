@@ -18,6 +18,12 @@ class CreateTournamentOperationEvent extends TournamentOperationsEvent {
   final int? maxParticipants;
   /// Tournament league (optional)
   final String? league;
+  /// Tournament start date (optional)
+  final DateTime? startDate;
+  /// Tournament start time in HH:MM format (optional)
+  final String? startTime;
+  /// Tournament description (optional)
+  final String? description;
 
   /// Constructor
   CreateTournamentOperationEvent({
@@ -26,10 +32,22 @@ class CreateTournamentOperationEvent extends TournamentOperationsEvent {
     required this.isPublic,
     this.maxParticipants,
     this.league,
+    this.startDate,
+    this.startTime,
+    this.description,
   });
 
   @override
-  List<Object?> get props => [name, format, isPublic, maxParticipants, league];
+  List<Object?> get props => [
+    name, 
+    format, 
+    isPublic, 
+    maxParticipants, 
+    league,
+    startDate,
+    startTime,
+    description,
+  ];
 }
 
 /// Event to join a tournament using an invite code

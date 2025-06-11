@@ -17,9 +17,12 @@ class _CreateTournamentPageState extends State<CreateTournamentPage> {
   final _nameController = TextEditingController();
   final _leagueController = TextEditingController();
   final _maxParticipantsController = TextEditingController();
+  final _descriptionController = TextEditingController();
 
   String _selectedFormat = 'advanced';
   bool _isPublic = true;
+  DateTime? _selectedDate;
+  TimeOfDay? _selectedTime;
 
   final List<String> _formats = [
     'advanced',
@@ -34,7 +37,42 @@ class _CreateTournamentPageState extends State<CreateTournamentPage> {
     _nameController.dispose();
     _leagueController.dispose();
     _maxParticipantsController.dispose();
+    _descriptionController.dispose();
     super.dispose();
+  }
+
+  Future<void> _selectDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      helpText: 'Seleziona data torneo',
+      cancelText: 'Annulla',
+      confirmText: 'Conferma',
+    );
+    
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
+  Future<void> _selectTime() async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime ?? TimeOfDay.now(),
+      helpText: 'Seleziona ora di inizio',
+      cancelText: 'Annulla',
+      confirmText: 'Conferma',
+    );
+    
+    if (picked != null && picked != _selectedTime) {
+      setState(() {
+        _selectedTime = picked;
+      });
+    }
   }
 
   @override
@@ -86,6 +124,12 @@ class _CreateTournamentPageState extends State<CreateTournamentPage> {
                 _buildFormatField(),
                 const SizedBox(height: 16),
                 _buildLeagueField(),
+                const SizedBox(height: 16),
+                _buildDescriptionField(),
+                const SizedBox(height: 24),
+                _buildSectionTitle('Programmazione'),
+                const SizedBox(height: 16),
+                _buildDateTimeFields(),
                 const SizedBox(height: 24),
                 _buildSectionTitle('Impostazioni Privacy'),
                 const SizedBox(height: 16),
@@ -168,6 +212,86 @@ class _CreateTournamentPageState extends State<CreateTournamentPage> {
         border: OutlineInputBorder(),
         prefixIcon: Icon(Icons.group),
       ),
+    );
+  }
+
+  Widget _buildDescriptionField() {
+    return TextFormField(
+      controller: _descriptionController,
+      decoration: const InputDecoration(
+        labelText: 'Descrizione (opzionale)',
+        hintText: 'Aggiungi dettagli sul torneo, regole speciali, premi...',
+        border: OutlineInputBorder(),
+        prefixIcon: Icon(Icons.description),
+      ),
+      maxLines: 3,
+      maxLength: 500,
+    );
+  }
+
+  Widget _buildDateTimeFields() {
+    return Column(
+      children: [
+        // Date field
+        InkWell(
+          onTap: _selectDate,
+          child: InputDecorator(
+            decoration: const InputDecoration(
+              labelText: 'Data di inizio (opzionale)',
+              hintText: 'Seleziona la data',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.calendar_today),
+            ),
+            child: Text(
+              _selectedDate != null
+                  ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
+                  : 'Nessuna data selezionata',
+              style: TextStyle(
+                color: _selectedDate != null ? null : Colors.grey[600],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Time field
+        InkWell(
+          onTap: _selectTime,
+          child: InputDecorator(
+            decoration: const InputDecoration(
+              labelText: 'Ora di inizio (opzionale)',
+              hintText: 'Seleziona l\'ora',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.access_time),
+            ),
+            child: Text(
+              _selectedTime != null
+                  ? '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}'
+                  : 'Nessun orario selezionato',
+              style: TextStyle(
+                color: _selectedTime != null ? null : Colors.grey[600],
+              ),
+            ),
+          ),
+        ),
+        if (_selectedDate != null || _selectedTime != null) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.info_outline, size: 16, color: Colors.orange),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  'Nota: I tornei serali potrebbero superare la mezzanotte',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.orange[700],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 
@@ -288,6 +412,16 @@ class _CreateTournamentPageState extends State<CreateTournamentPage> {
           ? _leagueController.text.trim()
           : null;
 
+      final description = _descriptionController.text.isNotEmpty
+          ? _descriptionController.text.trim()
+          : null;
+
+      // Format time as HH:MM string if selected
+      String? startTimeString;
+      if (_selectedTime != null) {
+        startTimeString = '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}';
+      }
+
       context.read<TournamentOperationsBloc>().add(
         CreateTournamentOperationEvent(
           name: _nameController.text.trim(),
@@ -295,6 +429,9 @@ class _CreateTournamentPageState extends State<CreateTournamentPage> {
           isPublic: _isPublic,
           maxParticipants: maxParticipants,
           league: league,
+          startDate: _selectedDate,
+          startTime: startTimeString,
+          description: description,
         ),
       );
     }

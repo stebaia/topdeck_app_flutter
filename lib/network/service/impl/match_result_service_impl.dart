@@ -27,63 +27,19 @@ class MatchResultServiceImpl {
           'notes': notes,
         },
       );
+      
 
       if (response.status != 200) {
         throw Exception('Failed to submit match result: ${response.data}');
       }
 
+
+
       print('Successfully submitted match result: ${response.data}');
       return response.data;
     } catch (e) {
-      print('Error in submitMatchResult: $e');
-      
-      // Fallback: try direct DB update if the edge function fails
-      try {
-        final currentUser = client.auth.currentUser;
-        if (currentUser == null) {
-          throw Exception('User not authenticated');
-        }
-        
-        // Get match details to verify user is a participant
-        final match = await client
-          .from('matches')
-          .select()
-          .eq('id', matchId)
-          .single();
-        
-        // Verify user is a participant
-        if (match['player1_id'] != currentUser.id && match['player2_id'] != currentUser.id) {
-          throw Exception('You are not a participant in this match');
-        }
-        
-        // Verify winner is a participant
-        if (winnerId != match['player1_id'] && winnerId != match['player2_id']) {
-          throw Exception('Winner must be a participant in this match');
-        }
-        
-        // Update match result - only update the winner_id since other fields don't exist in the schema
-        await client
-          .from('matches')
-          .update({
-            'winner_id': winnerId,
-          })
-          .eq('id', matchId);
-        
-        // Get updated match
-        final updatedMatch = await client
-          .from('matches')
-          .select('*, player1:player1_id(username), player2:player2_id(username), winner:winner_id(username)')
-          .eq('id', matchId)
-          .single();
-        
-        return {
-          'message': 'Match result recorded successfully (direct DB)',
-          'match': updatedMatch,
-        };
-      } catch (dbError) {
-        print('Complete failure in submitting match result: $dbError');
-        throw Exception('Failed to submit match result: ${e.toString()}');
-      }
+      print('Error calling submit-match-result edge function: $e');
+      throw Exception('Failed to submit match result: ${e.toString()}');
     }
   }
   
