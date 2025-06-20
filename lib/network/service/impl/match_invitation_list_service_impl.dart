@@ -6,8 +6,10 @@ class MatchInvitationListServiceImpl {
   /// The Supabase client
   final SupabaseClient client = supabase;
 
-  /// Get invitations received by the current user
-  Future<List<Map<String, dynamic>>> getUserInvitations() async {
+  
+
+  /// Get all invitations (both received and sent) for the current user
+  Future<List<Map<String, dynamic>>> getAllInvitations() async {
     try {
       final response = await client.functions.invoke(
         'see-match-invitations',
@@ -18,10 +20,37 @@ class MatchInvitationListServiceImpl {
         throw Exception('Failed to load invitations: ${response.data}');
       }
 
-      return List<Map<String, dynamic>>.from(response.data['received']);
+      // La edge function ora restituisce direttamente una lista combinata
+      final allInvitations = List<Map<String, dynamic>>.from(response.data);
+      
+      print('Loaded ${allInvitations.length} total invitations');
+      return allInvitations;
     } catch (e) {
-      print('Error in getUserInvitations: $e');
+      print('Error in getAllInvitations: $e');
       throw Exception('Failed to load invitations: ${e.toString()}');
+    }
+  }
+
+  /// Get invitations received by the current user
+  Future<List<Map<String, dynamic>>> getReceivedInvitations() async {
+    try {
+      final response = await client.functions.invoke(
+        'see-match-invitations/received-invitations',
+        method: HttpMethod.get,
+      );
+
+      if (response.status != 200) {
+        throw Exception('Failed to load received invitations: ${response.data}');
+      }
+
+      // Questo endpoint restituisce solo gli inviti ricevuti
+      final receivedInvitations = List<Map<String, dynamic>>.from(response.data);
+      
+      print('Loaded ${receivedInvitations.length} received invitations');
+      return receivedInvitations;
+    } catch (e) {
+      print('Error in getReceivedInvitations: $e');
+      throw Exception('Failed to load received invitations: ${e.toString()}');
     }
   }
 
@@ -29,7 +58,7 @@ class MatchInvitationListServiceImpl {
   Future<List<Map<String, dynamic>>> getSentInvitations() async {
     try {
       final response = await client.functions.invoke(
-        'see-match-invitations',
+        'see-match-invitations/sent-invitations',
         method: HttpMethod.get,
       );
 
@@ -37,7 +66,11 @@ class MatchInvitationListServiceImpl {
         throw Exception('Failed to load sent invitations: ${response.data}');
       }
 
-      return List<Map<String, dynamic>>.from(response.data['sent']);
+      // Questo endpoint restituisce solo gli inviti inviati
+      final sentInvitations = List<Map<String, dynamic>>.from(response.data);
+      
+      print('Loaded ${sentInvitations.length} sent invitations');
+      return sentInvitations;
     } catch (e) {
       print('Error in getSentInvitations: $e');
       throw Exception('Failed to load sent invitations: ${e.toString()}');

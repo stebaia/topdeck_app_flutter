@@ -1,15 +1,15 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:topdeck_app_flutter/network/service/impl/match_invitation_list_service_impl.dart';
+import 'package:topdeck_app_flutter/repositories/match_invitation_repository.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/invitation_list_event.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/invitation_list_state.dart';
 
 /// BLoC for managing match invitation listings
 class InvitationListBloc extends Bloc<InvitationListEvent, InvitationListState> {
-  final MatchInvitationListServiceImpl _invitationService = MatchInvitationListServiceImpl();
+  final MatchInvitationRepository _repository;
   final bool isForSentInvitations;
 
   /// Constructor
-  InvitationListBloc({this.isForSentInvitations = false}) : super(InvitationListInitialState()) {
+  InvitationListBloc(this._repository, {this.isForSentInvitations = false}) : super(InvitationListInitialState()) {
     on<LoadInvitationsEvent>(_onLoadInvitations);
     on<RefreshInvitationsEvent>(_onRefreshInvitations);
     on<LoadSentInvitationsEvent>(_onLoadSentInvitations);
@@ -26,7 +26,10 @@ class InvitationListBloc extends Bloc<InvitationListEvent, InvitationListState> 
       add(LoadInvitationsEvent());
     }
   }
-  
+
+  void loadInvitations() => add(LoadInvitationsEvent());
+
+
   /// Getter per verificare se stiamo mostrando gli inviti inviati
   bool get showingSentInvitations => isForSentInvitations;
 
@@ -39,8 +42,9 @@ class InvitationListBloc extends Bloc<InvitationListEvent, InvitationListState> 
     emit(InvitationListLoadingState());
 
     try {
-      final invitations = await _invitationService.getUserInvitations();
-      emit(InvitationListLoadedState(invitations, areSentInvitations: false));
+      final invitations = await _repository.getAll();
+      final jsonInvitations = invitations.map((inv) => inv.toJson()).toList();
+      emit(InvitationListLoadedState(jsonInvitations, areSentInvitations: false));
     } catch (e) {
       emit(InvitationListErrorState(e.toString(), forSentInvitations: false));
     }
@@ -54,8 +58,9 @@ class InvitationListBloc extends Bloc<InvitationListEvent, InvitationListState> 
     
     // Don't show loading state during refresh
     try {
-      final invitations = await _invitationService.getUserInvitations();
-      emit(InvitationListLoadedState(invitations, areSentInvitations: false));
+      final invitations = await _repository.getAll();
+      final jsonInvitations = invitations.map((inv) => inv.toJson()).toList();
+      emit(InvitationListLoadedState(jsonInvitations, areSentInvitations: false));
     } catch (e) {
       emit(InvitationListErrorState(e.toString(), forSentInvitations: false));
     }
@@ -70,8 +75,9 @@ class InvitationListBloc extends Bloc<InvitationListEvent, InvitationListState> 
     emit(SentInvitationsLoadingState());
 
     try {
-      final invitations = await _invitationService.getSentInvitations();
-      emit(InvitationListLoadedState(invitations, areSentInvitations: true));
+      final invitations = await _repository.getAll();
+      final jsonInvitations = invitations.map((inv) => inv.toJson()).toList();
+      emit(InvitationListLoadedState(jsonInvitations, areSentInvitations: true));
     } catch (e) {
       emit(InvitationListErrorState(e.toString(), forSentInvitations: true));
     }
@@ -85,8 +91,9 @@ class InvitationListBloc extends Bloc<InvitationListEvent, InvitationListState> 
     
     // Don't show loading state during refresh
     try {
-      final invitations = await _invitationService.getSentInvitations();
-      emit(InvitationListLoadedState(invitations, areSentInvitations: true));
+      final invitations = await _repository.getAll();
+      final jsonInvitations = invitations.map((inv) => inv.toJson()).toList();
+      emit(InvitationListLoadedState(jsonInvitations, areSentInvitations: true));
     } catch (e) {
       emit(InvitationListErrorState(e.toString(), forSentInvitations: true));
     }
@@ -110,16 +117,15 @@ class InvitationListBloc extends Bloc<InvitationListEvent, InvitationListState> 
     emit(InvitationProcessingState(event.invitationId));
     
     try {
-      // Otteniamo i dettagli dell'invito per mostrarli nella UI di selezione deck
-      final client = _invitationService.client;
-      final invitation = await client
-        .from('match_invitations')
-        .select('*, sender:sender_id(username, nome, cognome), receiver:receiver_id(username, nome, cognome)')
-        .eq('id', event.invitationId)
-        .single();
+      // Per ora usiamo un placeholder per l'invito
+      // In futuro implementeremo il metodo get nel repository
+      final placeholderInvitation = {
+        'id': event.invitationId,
+        'status': 'pending',
+      };
       
       // Emettiamo lo stato che indica di selezionare un mazzo
-      emit(SelectingDeckForInvitationState(invitation));
+      emit(SelectingDeckForInvitationState(placeholderInvitation));
     } catch (e) {
       emit(InvitationListErrorState(e.toString(), forSentInvitations: false));
     }
@@ -134,7 +140,7 @@ class InvitationListBloc extends Bloc<InvitationListEvent, InvitationListState> 
     emit(InvitationProcessingState(event.invitationId));
     
     try {
-      final result = await _invitationService.acceptInvitation(
+      final result = await _repository.acceptInvitation(
         event.invitationId, 
         selectedDeckId: event.selectedDeckId
       );
@@ -166,7 +172,7 @@ class InvitationListBloc extends Bloc<InvitationListEvent, InvitationListState> 
     emit(InvitationProcessingState(event.invitationId));
     
     try {
-      await _invitationService.declineInvitation(event.invitationId);
+      await _repository.declineInvitation(event.invitationId);
       emit(InvitationDeclinedState(event.invitationId));
       
       // Ricarica la lista degli inviti dopo il rifiuto

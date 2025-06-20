@@ -11,7 +11,9 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:auto_route/auto_route.dart' as _i22;
 import 'package:flutter/material.dart' as _i23;
-import 'package:topdeck_app_flutter/model/entities/deck.dart' as _i24;
+import 'package:topdeck_app_flutter/model/entities/deck.dart' as _i25;
+import 'package:topdeck_app_flutter/model/entities/match_invitation.dart'
+    as _i24;
 import 'package:topdeck_app_flutter/ui/auth/complete_google_profile_page.dart'
     as _i1;
 import 'package:topdeck_app_flutter/ui/auth/confirm_new_password_page.dart'
@@ -146,7 +148,7 @@ class DeckSelectionPageRoute
     extends _i22.PageRouteInfo<DeckSelectionPageRouteArgs> {
   DeckSelectionPageRoute({
     _i23.Key? key,
-    required Map<String, dynamic> invitation,
+    required _i24.MatchInvitation invitation,
     List<_i22.PageRouteInfo>? children,
   }) : super(
          DeckSelectionPageRoute.name,
@@ -170,7 +172,7 @@ class DeckSelectionPageRouteArgs {
 
   final _i23.Key? key;
 
-  final Map<String, dynamic> invitation;
+  final _i24.MatchInvitation invitation;
 
   @override
   String toString() {
@@ -184,7 +186,7 @@ class DeckSelectionWizardPageRoute
     extends _i22.PageRouteInfo<DeckSelectionWizardPageRouteArgs> {
   DeckSelectionWizardPageRoute({
     _i23.Key? key,
-    required _i24.DeckFormat format,
+    required _i25.DeckFormat format,
     List<_i22.PageRouteInfo>? children,
   }) : super(
          DeckSelectionWizardPageRoute.name,
@@ -208,7 +210,7 @@ class DeckSelectionWizardPageRouteArgs {
 
   final _i23.Key? key;
 
-  final _i24.DeckFormat format;
+  final _i25.DeckFormat format;
 
   @override
   String toString() {
@@ -447,7 +449,7 @@ class MatchResultsPageRoute
     extends _i22.PageRouteInfo<MatchResultsPageRouteArgs> {
   MatchResultsPageRoute({
     _i23.Key? key,
-    required _i24.DeckFormat format,
+    required _i25.DeckFormat format,
     required String playerDeckId,
     required String opponentId,
     List<_i22.PageRouteInfo>? children,
@@ -488,7 +490,7 @@ class MatchResultsPageRouteArgs {
 
   final _i23.Key? key;
 
-  final _i24.DeckFormat format;
+  final _i25.DeckFormat format;
 
   final String playerDeckId;
 
@@ -506,7 +508,7 @@ class OpponentSearchPageRoute
     extends _i22.PageRouteInfo<OpponentSearchPageRouteArgs> {
   OpponentSearchPageRoute({
     _i23.Key? key,
-    required _i24.DeckFormat format,
+    required _i25.DeckFormat format,
     required String selectedDeckId,
     List<_i22.PageRouteInfo>? children,
   }) : super(
@@ -543,7 +545,7 @@ class OpponentSearchPageRouteArgs {
 
   final _i23.Key? key;
 
-  final _i24.DeckFormat format;
+  final _i25.DeckFormat format;
 
   final String selectedDeckId;
 

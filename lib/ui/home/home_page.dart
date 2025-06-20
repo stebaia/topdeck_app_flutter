@@ -41,9 +41,6 @@ class _HomePageState extends State<HomePage> {
               icon: const Icon(CupertinoIcons.plus),
             ),
             bottomNavigationBar: BottomNavigationBar(
-              type: BottomNavigationBarType.fixed,
-              selectedItemColor: Theme.of(context).primaryColor,
-              unselectedItemColor: Colors.grey,
               currentIndex: tabsRouter.activeIndex,
               onTap: tabsRouter.setActiveIndex,
               items: const [

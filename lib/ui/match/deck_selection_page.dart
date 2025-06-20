@@ -2,14 +2,15 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:topdeck_app_flutter/network/service/impl/deck_service_impl.dart';
-import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/received_invitation_list_bloc.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/invitation_list_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/invitation_list_event.dart';
+import 'package:topdeck_app_flutter/model/entities/match_invitation.dart';
 
 @RoutePage()
 /// Pagina per selezionare il mazzo da utilizzare in un match
 class DeckSelectionPage extends StatefulWidget {
   /// L'invito al match
-  final Map<String, dynamic> invitation;
+  final MatchInvitation invitation;
   
   /// Constructor
   const DeckSelectionPage({
@@ -42,8 +43,8 @@ class _DeckSelectionPageState extends State<DeckSelectionPage> {
     });
     
     try {
-      // Recupera il formato dall'invito
-      final format = widget.invitation['format'];
+      // Recupera il formato dall'invito usando il modello tipizzato
+      final format = widget.invitation.format;
       
       // Recupera i mazzi dell'utente che corrispondono al formato dell'invito
       final allDecks = await _deckService.getUserDecks();
@@ -77,11 +78,11 @@ class _DeckSelectionPageState extends State<DeckSelectionPage> {
       return;
     }
     
-    // Ottieni l'ID dell'invito
-    final invitationId = widget.invitation['id'];
+    // Ottieni l'ID dell'invito dal modello tipizzato
+    final invitationId = widget.invitation.id;
     
-    // Invia l'evento di accettazione con il mazzo selezionato
-    context.read<ReceivedInvitationListBloc>().add(
+    // Invia l'evento di accettazione con il mazzo selezionato utilizzando il nuovo bloc unificato
+    context.read<InvitationListBloc>().add(
       AcceptInvitationWithDeckEvent(invitationId, _selectedDeckId!),
     );
     
@@ -168,14 +169,14 @@ class _DeckSelectionPageState extends State<DeckSelectionPage> {
       padding: const EdgeInsets.all(16.0),
       children: [
         Text(
-          'Scegli un mazzo per il match di formato: ${widget.invitation['format']}',
+          'Scegli un mazzo per il match di formato: ${widget.invitation.format}',
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
         Text(
-          'Invito da: ${widget.invitation['sender']['username']}',
+          'Invito da: ${widget.invitation.displaySenderProfile?.username ?? 'Sconosciuto'}',
           style: const TextStyle(
             fontSize: 16,
           ),

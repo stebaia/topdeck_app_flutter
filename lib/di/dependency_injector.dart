@@ -13,6 +13,7 @@ import 'package:topdeck_app_flutter/state_management/cubit/decks/decks_cubit.dar
 import 'package:topdeck_app_flutter/di/service_locator.dart';
 import 'package:topdeck_app_flutter/repositories/auth_repository.dart';
 import 'package:topdeck_app_flutter/repositories/deck_repository.dart';
+import 'package:topdeck_app_flutter/repositories/elo_repository.dart';
 import 'package:topdeck_app_flutter/repositories/friend_repository.dart';
 import 'package:topdeck_app_flutter/repositories/match_repository.dart';
 import 'package:topdeck_app_flutter/repositories/profile_repository.dart';
@@ -27,8 +28,9 @@ import 'package:topdeck_app_flutter/state_management/blocs/tournament/tournament
 import 'package:topdeck_app_flutter/state_management/blocs/tournament/tournament_operations_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/user_search/user_search_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/match_list/match_list_bloc.dart';
-import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/received_invitation_list_bloc.dart';
-import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/sent_invitation_list_bloc.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/invitation_list_bloc.dart';
+import 'package:topdeck_app_flutter/repositories/match_invitation_repository.dart';
+import 'package:topdeck_app_flutter/state_management/cubit/theme/theme_cubit.dart';
 part 'blocs.dart';
 part 'mappers.dart';
 part 'providers.dart';

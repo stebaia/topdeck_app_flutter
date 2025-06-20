@@ -147,7 +147,7 @@ class MatchInvitationDetailPage extends StatelessWidget {
                           Expanded(
                             child: ElevatedButton(
                               onPressed: () {
-                                context.pushRoute(DeckSelectionPageRoute(invitation: invitation));
+                                //context.pushRoute(DeckSelectionPageRoute(invitation: invitation));
                                 // Invece di accettare direttamente, andiamo alla pagina di selezione del mazzo
                                 
                               },

@@ -4,6 +4,9 @@ final List<RepositoryProvider> _repositories = [
   RepositoryProvider<DeckRepository>(
     create: (context) => Provider.of<DeckRepository>(context, listen: false),
   ),
+  RepositoryProvider<EloRepository>(
+    create: (context) => Provider.of<EloRepository>(context, listen: false),
+  ),
   RepositoryProvider<TournamentRepository>(
     create: (context) => Provider.of<TournamentRepository>(context, listen: false),
   ),
@@ -12,5 +15,8 @@ final List<RepositoryProvider> _repositories = [
   ),
   RepositoryProvider<TournamentInvitationRepository>(
     create: (context) => Provider.of<TournamentInvitationRepository>(context, listen: false),
+  ),
+  RepositoryProvider<MatchInvitationRepository>(
+    create: (context) => Provider.of<MatchInvitationRepository>(context, listen: false),
   ),
 ];

@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:topdeck_app_flutter/model/entities/match_invitation.dart';
 
 /// Base state class for invitation listing
 abstract class InvitationListState extends Equatable {
@@ -17,14 +18,20 @@ class SentInvitationsLoadingState extends InvitationListState {}
 
 /// Invitations loaded state
 class InvitationListLoadedState extends InvitationListState {
-  /// List of invitations
-  final List<Map<String, dynamic>> invitations;
+  /// List of invitations (using MatchInvitation model)
+  final List<MatchInvitation> invitations;
+  
+  /// Raw JSON data for backward compatibility
+  final List<Map<String, dynamic>> rawInvitations;
   
   /// Whether these are sent invitations
   final bool areSentInvitations;
   
   /// Constructor
-  InvitationListLoadedState(this.invitations, {required this.areSentInvitations});
+  InvitationListLoadedState(this.rawInvitations, {required this.areSentInvitations})
+      : invitations = rawInvitations
+            .map((json) => MatchInvitation.fromEdgeFunctionResponse(json))
+            .toList();
   
   @override
   List<Object?> get props => [invitations, areSentInvitations];
@@ -59,11 +66,15 @@ class InvitationProcessingState extends InvitationListState {
 
 /// Selecting deck for invitation state 
 class SelectingDeckForInvitationState extends InvitationListState {
-  /// The invitation data
-  final Map<String, dynamic> invitation;
+  /// The invitation data (using MatchInvitation model)
+  final MatchInvitation invitation;
+  
+  /// Raw JSON data for backward compatibility
+  final Map<String, dynamic> rawInvitation;
   
   /// Constructor
-  SelectingDeckForInvitationState(this.invitation);
+  SelectingDeckForInvitationState(this.rawInvitation)
+      : invitation = MatchInvitation.fromEdgeFunctionResponse(rawInvitation);
   
   @override
   List<Object?> get props => [invitation];

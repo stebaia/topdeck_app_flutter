@@ -52,13 +52,15 @@ final List<BlocProvider> _blocs = [
   BlocProvider<MatchListBloc>(
     create: (context) => MatchListBloc(),
   ),
-  
-  // Invitation list blocs (separati per tipo)
-  BlocProvider<ReceivedInvitationListBloc>(
-    create: (context) => ReceivedInvitationListBloc(),
+  BlocProvider<InvitationListBloc>(
+    create: (context) => InvitationListBloc(
+      context.read<MatchInvitationRepository>(),
+    ),
   ),
-  
-  BlocProvider<SentInvitationListBloc>(
-    create: (context) => SentInvitationListBloc(),
+
+  // Theme cubit
+  BlocProvider<ThemeCubit>(
+    create: (context) => ThemeCubit()..loadTheme(),
   ),
+
 ];

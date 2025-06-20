@@ -18,7 +18,8 @@ class MatchResultPage extends StatefulWidget {
   State<MatchResultPage> createState() => _MatchResultPageState();
 }
 
-class _MatchResultPageState extends State<MatchResultPage> {
+class _MatchResultPageState extends State<MatchResultPage> 
+    with TickerProviderStateMixin {
   final MatchResultServiceImpl _matchResultService = MatchResultServiceImpl();
   final _formKey = GlobalKey<FormState>();
   
@@ -33,10 +34,81 @@ class _MatchResultPageState extends State<MatchResultPage> {
   String? _errorMessage;
   Map<String, dynamic>? _result;
   
+  // Animazioni
+  late AnimationController _slideController;
+  late AnimationController _pulseController;
+  late AnimationController _scaleController;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _pulseAnimation;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
+  
   @override
   void initState() {
     super.initState();
     _initializeData();
+    _initializeAnimations();
+  }
+  
+  void _initializeAnimations() {
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    );
+    _scaleController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeOutCubic,
+    ));
+    
+    _pulseAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.05,
+    ).animate(CurvedAnimation(
+      parent: _pulseController,
+      curve: Curves.easeInOut,
+    ));
+    
+    _scaleAnimation = Tween<double>(
+      begin: 0.95,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _scaleController,
+      curve: Curves.elasticOut,
+    ));
+    
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
+    ));
+    
+    // Start animations
+    _slideController.forward();
+    _scaleController.forward();
+    _pulseController.repeat(reverse: true);
+  }
+  
+  @override
+  void dispose() {
+    _slideController.dispose();
+    _pulseController.dispose();
+    _scaleController.dispose();
+    _notesController.dispose();
+    super.dispose();
   }
   
   void _initializeData() {
@@ -50,6 +122,25 @@ class _MatchResultPageState extends State<MatchResultPage> {
       _player2Score = widget.match['player2_score'] ?? 0;
       _notesController.text = widget.match['notes'] ?? '';
     }
+  }
+  
+  /// Determina automaticamente il vincitore in base ai punteggi
+  void _updateWinnerFromScores() {
+    if (_player1Score > _player2Score) {
+      setState(() {
+        _winnerId = widget.match['player1_id'];
+      });
+    } else if (_player2Score > _player1Score) {
+      setState(() {
+        _winnerId = widget.match['player2_id'];
+      });
+    } else if (_player1Score == 0 && _player2Score == 0) {
+      // Se entrambi i punteggi sono 0, resettiamo il vincitore
+      setState(() {
+        _winnerId = null;
+      });
+    }
+    // In caso di pareggio (stesso punteggio > 0), manteniamo la selezione manuale
   }
   
   Future<void> _submitResult() async {
@@ -98,62 +189,162 @@ class _MatchResultPageState extends State<MatchResultPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Risultato registrato'),
-        content: SingleChildScrollView(
-          child: _result != null && _result!.containsKey('ratings')
-              ? Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Il risultato è stato registrato con successo.'),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Variazioni ELO:',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    _buildEloChange(_player1Name, _result!['ratings']['player1']),
-                    const SizedBox(height: 8),
-                    _buildEloChange(_player2Name, _result!['ratings']['player2']),
-                  ],
-                )
-              : const Text('Il risultato è stato registrato con successo.'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // Chiudi il dialog
-              Navigator.of(context).pop(true); // Torna alla pagina precedente con risultato positivo
-            },
-            child: const Text('OK'),
+      builder: (context) => _buildSuccessDialog(),
+    );
+  }
+
+  Widget _buildSuccessDialog() {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Theme.of(context).primaryColor,
+                Theme.of(context).primaryColor.withOpacity(0.8),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).primaryColor.withOpacity(0.4),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
-        ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ScaleTransition(
+                scale: _pulseAnimation,
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_circle,
+                    color: Colors.white,
+                    size: 50,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Risultato Salvato!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Il match è stato registrato con successo',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.9),
+                  fontSize: 16,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              
+              // ELO changes if available
+              if (_result != null && _result!.containsKey('ratings')) ...[
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Variazioni ELO',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildEloChange(_player1Name, _result!['ratings']['player1']),
+                      const SizedBox(height: 8),
+                      _buildEloChange(_player2Name, _result!['ratings']['player2']),
+                    ],
+                  ),
+                ),
+              ],
+              
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Chiudi il dialog
+                  Navigator.of(context).pop(true); // Torna alla pagina precedente
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Theme.of(context).primaryColor,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                ),
+                child: const Text(
+                  'OK',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
-  
-  Widget _buildEloChange(String playerName, Map<String, dynamic> ratingData) {
-    final int before = ratingData['before'];
-    final int after = ratingData['after'];
-    final int change = ratingData['change'];
+
+  Widget _buildEloChange(String playerName, Map<String, dynamic>? ratingData) {
+    if (ratingData == null) return const SizedBox.shrink();
     
-    final Color changeColor = change >= 0 ? Colors.green : Colors.red;
-    final String changeText = change >= 0 ? '+$change' : '$change';
+    final oldRating = ratingData['old_rating'] ?? 0;
+    final newRating = ratingData['new_rating'] ?? 0;
+    final change = newRating - oldRating;
+    final isPositive = change > 0;
     
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(playerName),
+        Text(
+          playerName,
+          style: const TextStyle(color: Colors.white),
+        ),
         Row(
           children: [
-            Text('$before → $after'),
-            const SizedBox(width: 8),
             Text(
-              changeText,
-              style: TextStyle(
-                color: changeColor,
-                fontWeight: FontWeight.bold,
+              '$oldRating → $newRating',
+              style: const TextStyle(color: Colors.white),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: isPositive ? Colors.green : Colors.red,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${isPositive ? '+' : ''}$change',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
               ),
             ),
           ],
@@ -161,229 +352,65 @@ class _MatchResultPageState extends State<MatchResultPage> {
       ],
     );
   }
-  
-  @override
-  void dispose() {
-    _notesController.dispose();
-    super.dispose();
-  }
-  
+
   @override
   Widget build(BuildContext context) {
-    final player1Id = widget.match['player1_id'];
-    final player2Id = widget.match['player2_id'];
-    
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         title: const Text('Inserisci risultato'),
+        
       ),
-      body: _isSubmitting
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SafeArea(
+        child: _isSubmitting 
+          ? _buildLoadingState()
+          : SlideTransition(
+              position: _slideAnimation,
+              child: FadeTransition(
+                opacity: _fadeAnimation,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Informazioni match
-                    Card(
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Formato: ${widget.match['format']}',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    _player1Name,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                const Text(
-                                  'VS',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    _player2Name,
-                                    textAlign: TextAlign.right,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
+                    // Header con gradiente
+                    
+                    
+                    // Contenuto principale
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              
+                              
+                              // Info match con animazioni
+                              
+                              const SizedBox(height: 32),
+                              
+                              // Selezione vincitore con effetti
+                              _buildInteractiveWinnerSelection(),
+                              
+                              if (_errorMessage != null) ...[
+                                const SizedBox(height: 16),
+                                _buildAnimatedError(),
                               ],
-                            ),
-                            if (widget.match['player1_deck'] != null && widget.match['player2_deck'] != null)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        widget.match['player1_deck']['name'] ?? 'Mazzo sconosciuto',
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontStyle: FontStyle.italic,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        widget.match['player2_deck']['name'] ?? 'Mazzo sconosciuto',
-                                        textAlign: TextAlign.right,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontStyle: FontStyle.italic,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Selezione vincitore
-                    const Text(
-                      'Seleziona il vincitore',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildWinnerSelection(
-                            player1Id,
-                            _player1Name,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildWinnerSelection(
-                            player2Id,
-                            _player2Name,
-                          ),
-                        ),
-                      ],
-                    ),
-                    
-                    if (_errorMessage != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(
-                          _errorMessage!,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Punteggio
-                    const Text(
-                      'Punteggio (opzionale)',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildScoreInput(
-                            _player1Name,
-                            (value) {
-                              setState(() {
-                                _player1Score = int.tryParse(value) ?? 0;
-                              });
-                            },
-                            initialValue: _player1Score.toString(),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildScoreInput(
-                            _player2Name,
-                            (value) {
-                              setState(() {
-                                _player2Score = int.tryParse(value) ?? 0;
-                              });
-                            },
-                            initialValue: _player2Score.toString(),
-                          ),
-                        ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Note
-                    const Text(
-                      'Note (opzionale)',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _notesController,
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        hintText: 'Inserisci eventuali note sul match',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 32),
-                    
-                    // Pulsante invio
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _submitResult,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: const Text(
-                          'Invia risultato',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                              
+                              const SizedBox(height: 32),
+                              
+                              // Punteggio con stile
+                              _buildStyledScoreSection(),
+                            
+                              
+                              const SizedBox(height: 40),
+                              
+                              // Pulsante con gradiente e animazioni
+                              _buildGradientSubmitButton(),
+                              
+                              const SizedBox(height: 20),
+                            ],
                           ),
                         ),
                       ),
@@ -392,49 +419,69 @@ class _MatchResultPageState extends State<MatchResultPage> {
                 ),
               ),
             ),
+      ),
     );
   }
-  
-  Widget _buildWinnerSelection(String playerId, String playerName) {
-    final bool isSelected = _winnerId == playerId;
-    
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _winnerId = playerId;
-        });
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: isSelected ? Theme.of(context).primaryColor : Colors.grey.shade300,
-            width: 2,
-          ),
-          borderRadius: BorderRadius.circular(12),
-          color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : null,
+
+  Widget _buildLoadingState() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Theme.of(context).primaryColor.withOpacity(0.1),
+            Theme.of(context).scaffoldBackgroundColor,
+          ],
         ),
+      ),
+      child: Center(
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            isSelected
-                ? Icon(
-                    Icons.check_circle,
-                    color: Theme.of(context).primaryColor,
-                    size: 28,
-                  )
-                : const Icon(
-                    Icons.circle_outlined,
-                    color: Colors.grey,
-                    size: 28,
+            ScaleTransition(
+              scale: _pulseAnimation,
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).primaryColor,
+                      Theme.of(context).primaryColor.withOpacity(0.7),
+                    ],
                   ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).primaryColor.withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.save,
+                  color: Colors.white,
+                  size: 40,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Salvando risultato...',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
             const SizedBox(height: 8),
             Text(
-              playerName,
-              textAlign: TextAlign.center,
+              'Un momento, stiamo registrando il match',
               style: TextStyle(
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? Theme.of(context).primaryColor : null,
+                fontSize: 14,
+                color: Colors.grey.shade600,
               ),
             ),
           ],
@@ -442,38 +489,778 @@ class _MatchResultPageState extends State<MatchResultPage> {
       ),
     );
   }
-  
-  Widget _buildScoreInput(String label, Function(String) onChanged, {required String initialValue}) {
+
+  Widget _buildModernHeader() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Theme.of(context).primaryColor,
+            Theme.of(context).primaryColor.withOpacity(0.8),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).primaryColor.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Inserisci risultato',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  'Registra l\'esito del match',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white.withOpacity(0.9),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.sports_esports,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnimatedMatchInfo() {
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF6366F1), // Indigo-500
+              Color(0xFF4F46E5), // Indigo-600
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF6366F1).withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Background pattern come nel design esistente
+            Positioned(
+              right: -20,
+              top: -20,
+              child: Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.1),
+                ),
+              ),
+            ),
+            Positioned(
+              right: -10,
+              bottom: -30,
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.05),
+                ),
+              ),
+            ),
+            // Content
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.games,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        widget.match['format'] ?? 'Formato non specificato',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildPlayerCard(_player1Name, widget.match['player1_deck'], true),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: ScaleTransition(
+                        scale: _pulseAnimation,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text(
+                            'VS',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: _buildPlayerCard(_player2Name, widget.match['player2_deck'], false),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlayerCard(String playerName, dynamic deck, bool isPlayer1) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withOpacity(0.2),
+          ),
+          child: Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.9),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.person,
+              color: const Color(0xFF6366F1),
+              size: 32,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          playerName,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: Colors.white,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        if (deck != null)
+          Container(
+            margin: const EdgeInsets.only(top: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              deck['name'] ?? '',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildInteractiveWinnerSelection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).primaryColor,
+                    Theme.of(context).primaryColor.withOpacity(0.8),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.emoji_events,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Vincitore',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            
+            
+          ],
+        ),
+        const SizedBox(height: 20),
+        Row(
+          children: [
+            Expanded(
+              child: _buildInteractiveWinnerOption(
+                widget.match['player1_id'],
+                _player1Name,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildInteractiveWinnerOption(
+                widget.match['player2_id'],
+                _player2Name,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInteractiveWinnerOption(String playerId, String playerName) {
+    final isSelected = _winnerId == playerId;
+    
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _winnerId = playerId;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: isSelected 
+              ? const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF6366F1),
+                    Color(0xFF4F46E5),
+                  ],
+                )
+              : null,
+          color: isSelected ? null : Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected 
+                ? Colors.transparent
+                : Colors.white.withOpacity(0.2),
+            width: 1,
+          ),
+          boxShadow: isSelected ? [
+            BoxShadow(
+              color: const Color(0xFF6366F1).withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ] : null,
+        ),
+        child: Column(
+          children: [
+            AnimatedScale(
+              scale: isSelected ? 1.1 : 1.0,
+              duration: const Duration(milliseconds: 300),
+              child: Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: isSelected 
+                      ? Colors.white.withOpacity(0.2)
+                      : Colors.white.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isSelected ? Icons.check_circle : Icons.circle_outlined,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              playerName,
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                fontSize: 16,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (isSelected)
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  'VINCITORE',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnimatedError() {
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(-1, 0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(
+        parent: _slideController,
+        curve: Curves.easeOut,
+      )),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.red.shade50,
+              Colors.red.shade100,
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.red.shade300),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.red.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.error_outline,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _errorMessage!,
+                style: TextStyle(
+                  color: Colors.red.shade700,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStyledScoreSection() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF6366F1),
+                    Color(0xFF4F46E5),
+                  ],
+                ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.deepPurple.withOpacity(0.6),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.deepPurple.withOpacity(0.25),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).primaryColor,
+                      Theme.of(context).primaryColor.withOpacity(0.8),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.scoreboard,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Punteggio (opzionale)',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+                    const SizedBox(height: 20),
+          // Campo unificato per inserimento rapido
+          _buildQuickScoreInput(),
+          const SizedBox(height: 16),
+          Text(
+            'oppure inserisci i punteggi separatamente:',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.white.withOpacity(0.7),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildStyledScoreInput(
+                  _player1Name,
+                  (value) {
+                    setState(() {
+                      _player1Score = int.tryParse(value) ?? 0;
+                    });
+                    _updateWinnerFromScores();
+                  },
+                  initialValue: _player1Score.toString(),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStyledScoreInput(
+                  _player2Name,
+                  (value) {
+                    setState(() {
+                      _player2Score = int.tryParse(value) ?? 0;
+                    });
+                    _updateWinnerFromScores();
+                  },
+                  initialValue: _player2Score.toString(),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickScoreInput() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.w500,
+          'Risultato rapido (formato: X-Y)',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
           ),
         ),
         const SizedBox(height: 8),
-        TextFormField(
-          initialValue: initialValue,
-          keyboardType: TextInputType.number,
-          onChanged: onChanged,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            onChanged: (value) {
+              _parseQuickScore(value);
+            },
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+            decoration: InputDecoration(
+              hintText: 'es: 2-0, 1-2, 3-1',
+              hintStyle: TextStyle(color: Colors.grey.shade400),
+              filled: true,
+              fillColor: Theme.of(context).primaryColor.withOpacity(0.05),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).primaryColor.withOpacity(0.5),
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).primaryColor.withOpacity(0.5),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Colors.white,
+                  width: 2,
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+              prefixIcon: Icon(
+                Icons.sports_score,
+                color: Colors.white.withOpacity(0.7),
+              ),
             ),
           ),
-          validator: (value) {
-            if (value != null && value.isNotEmpty) {
-              final int? score = int.tryParse(value);
-              if (score == null || score < 0) {
-                return 'Inserisci un numero valido';
-              }
-            }
-            return null;
-          },
         ),
       ],
+    );
+  }
+
+  /// Analizza l'input rapido del punteggio (formato X-Y)
+  void _parseQuickScore(String input) {
+    final regex = RegExp(r'^(\d+)-(\d+)$');
+    final match = regex.firstMatch(input.trim());
+    
+    if (match != null) {
+      final score1 = int.parse(match.group(1)!);
+      final score2 = int.parse(match.group(2)!);
+      
+      setState(() {
+        _player1Score = score1;
+        _player2Score = score2;
+      });
+      
+      _updateWinnerFromScores();
+    }
+  }
+
+  Widget _buildStyledScoreInput(String playerName, Function(String) onChanged, {required String initialValue}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          playerName,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            initialValue: initialValue,
+            onChanged: onChanged,
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+            decoration: InputDecoration(
+              hintText: '0',
+              hintStyle: TextStyle(color: Colors.grey.shade400),
+              filled: true,
+              fillColor: Theme.of(context).primaryColor.withOpacity(0.05),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).primaryColor.withOpacity(0.5),
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).primaryColor.withOpacity(0.5),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Colors.white,
+                  width: 2,
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 16),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  
+
+  Widget _buildGradientSubmitButton() {
+    final canSubmit = _winnerId != null;
+    
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      width: double.infinity,
+      height: 56,
+      decoration: BoxDecoration(
+        gradient: canSubmit 
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Theme.of(context).primaryColor,
+                  Theme.of(context).primaryColor.withOpacity(0.8),
+                ],
+              )
+            : null,
+        color: canSubmit ? null : Colors.grey.shade300,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: canSubmit ? [
+          BoxShadow(
+            color: Theme.of(context).primaryColor.withOpacity(0.4),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+          ),
+        ] : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: canSubmit ? _submitResult : null,
+          borderRadius: BorderRadius.circular(16),
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.save,
+                  color: canSubmit ? Colors.white : Colors.grey.shade600,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Salva risultato',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: canSubmit ? Colors.white : Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 } 

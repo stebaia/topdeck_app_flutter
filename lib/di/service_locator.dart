@@ -13,11 +13,14 @@ import 'package:topdeck_app_flutter/network/service/impl/tournament_participant_
 import 'package:topdeck_app_flutter/network/service/impl/tournament_invitation_service_impl.dart';
 import 'package:topdeck_app_flutter/network/service/impl/user_search_service_impl.dart';
 import 'package:topdeck_app_flutter/network/service/impl/elo_service_impl.dart';
+import 'package:topdeck_app_flutter/network/service/impl/match_invitation_list_service_impl.dart';
+import 'package:topdeck_app_flutter/network/service/impl/match_invitation_service_impl.dart';
 import 'package:topdeck_app_flutter/repositories/auth_repository.dart';
 import 'package:topdeck_app_flutter/repositories/deck_card_repository.dart';
 import 'package:topdeck_app_flutter/repositories/deck_repository.dart';
 import 'package:topdeck_app_flutter/repositories/friend_repository.dart';
 import 'package:topdeck_app_flutter/repositories/elo_repository.dart';
+import 'package:topdeck_app_flutter/repositories/match_invitation_repository.dart';
 import 'package:topdeck_app_flutter/repositories/impl/auth_repository_impl.dart';
 import 'package:topdeck_app_flutter/repositories/impl/deck_card_repository_impl.dart';
 import 'package:topdeck_app_flutter/repositories/impl/deck_repository_impl.dart';
@@ -28,6 +31,7 @@ import 'package:topdeck_app_flutter/repositories/impl/tournament_repository_impl
 import 'package:topdeck_app_flutter/repositories/impl/tournament_participant_repository_impl.dart';
 import 'package:topdeck_app_flutter/repositories/impl/tournament_invitation_repository_impl.dart';
 import 'package:topdeck_app_flutter/repositories/impl/user_search_repository_impl.dart';
+import 'package:topdeck_app_flutter/repositories/impl/match_invitation_repository_impl.dart';
 import 'package:topdeck_app_flutter/repositories/match_repository.dart';
 import 'package:topdeck_app_flutter/repositories/profile_repository.dart';
 import 'package:topdeck_app_flutter/repositories/tournament_repository.dart';
@@ -87,6 +91,14 @@ class ServiceLocator {
       ),
       Provider<PlayerStatsServiceImpl>(
         create: (_) => PlayerStatsServiceImpl(),
+      ),
+      
+      // Match Invitation Services
+      Provider<MatchInvitationListServiceImpl>(
+        create: (_) => MatchInvitationListServiceImpl(),
+      ),
+      Provider<MatchInvitationServiceImpl>(
+        create: (_) => MatchInvitationServiceImpl(),
       ),
       
       // Repositories - order matters! Dependencies must be registered first
@@ -150,6 +162,14 @@ class ServiceLocator {
       Provider<FriendRepository>(
         create: (context) => FriendRepositoryImpl(
           friendService: context.read<FriendServiceImpl>(),
+        ),
+      ),
+      
+      // Repository per i match invitation
+      Provider<MatchInvitationRepository>(
+        create: (context) => MatchInvitationRepositoryImpl(
+          context.read<MatchInvitationListServiceImpl>(),
+          context.read<MatchInvitationServiceImpl>(),
         ),
       ),
       

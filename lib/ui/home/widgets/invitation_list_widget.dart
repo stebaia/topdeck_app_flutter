@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:topdeck_app_flutter/model/entities/match_invitation.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/invitation_list_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/invitation_list_event.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/invitation_list_state.dart';
-import 'package:intl/intl.dart';
+import 'package:topdeck_app_flutter/ui/widgets/user_avatar_widget.dart';
 
 /// Widget that displays a list of match invitations
 class InvitationListWidget extends StatefulWidget {
@@ -29,6 +30,7 @@ class _InvitationListWidgetState extends State<InvitationListWidget> {
             child: CircularProgressIndicator(),
           );
         } else if (state is InvitationListLoadedState) {
+          // Use the already converted MatchInvitation objects
           return _buildInvitationList(state.invitations);
         } else if (state is InvitationListErrorState) {
           return Center(
@@ -82,7 +84,7 @@ class _InvitationListWidgetState extends State<InvitationListWidget> {
     );
   }
 
-  Widget _buildInvitationList(List<Map<String, dynamic>> invitations) {
+  Widget _buildInvitationList(List<MatchInvitation> invitations) {
     if (invitations.isEmpty) {
       return Center(
         child: Column(
@@ -125,14 +127,14 @@ class _InvitationListWidgetState extends State<InvitationListWidget> {
     );
   }
 
-  Widget _buildInvitationCard(Map<String, dynamic> invitation) {
-    final String senderName = invitation['sender']?['username'] ?? 'Sconosciuto';
-    final String format = invitation['format']?.toUpperCase() ?? 'SCONOSCIUTO';
-    final String? message = invitation['message'];
+  Widget _buildInvitationCard(MatchInvitation invitation) {
+    // Use the new typed model properties
+    final String senderName = invitation.displaySenderProfile?.username ?? 'Sconosciuto';
+    final String format = invitation.displayFormat ?? 'SCONOSCIUTO';
+    final String? message = invitation.message;
     
-    final date = invitation['created_at'] != null 
-        ? DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(invitation['created_at']))
-        : 'Data sconosciuta';
+    // Use the new formatted date/time from the model
+    final String date = invitation.displayDateTime ?? 'Data sconosciuta';
     
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -148,8 +150,9 @@ class _InvitationListWidgetState extends State<InvitationListWidget> {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  child: Text(senderName[0].toUpperCase()),
+                UserAvatarWidget(
+                  userProfile: invitation.displaySenderProfile,
+                  radius: 20,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -171,7 +174,7 @@ class _InvitationListWidgetState extends State<InvitationListWidget> {
                   ),
                 ),
                 Chip(
-                  label: Text(format),
+                  label: Text(format.toUpperCase()),
                   backgroundColor: Colors.blue.shade100,
                 ),
               ],
@@ -193,39 +196,53 @@ class _InvitationListWidgetState extends State<InvitationListWidget> {
             
             Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                'Ricevuto il $date',
-                style: TextStyle(
-                  color: Colors.grey.shade700,
-                  fontSize: 12,
-                ),
-                textAlign: TextAlign.right,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                                     Text(
+                     'Stato: ${invitation.status}',
+                     style: TextStyle(
+                       color: invitation.status == MatchInvitationStatus.pending ? Colors.orange : Colors.grey,
+                       fontSize: 12,
+                       fontWeight: FontWeight.w500,
+                     ),
+                   ),
+                  Text(
+                    'Ricevuto il $date',
+                    style: TextStyle(
+                      color: Colors.grey.shade700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
             ),
             
             const SizedBox(height: 12),
             
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                OutlinedButton(
-                  onPressed: () => _declineInvitation(invitation['id']),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
+            // Show buttons only for pending invitations
+            if (invitation.status == MatchInvitationStatus.pending)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  OutlinedButton(
+                    onPressed: () => _declineInvitation(invitation.id),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                    ),
+                    child: const Text('Rifiuta'),
                   ),
-                  child: const Text('Rifiuta'),
-                ),
-                const SizedBox(width: 12),
-                ElevatedButton(
-                  onPressed: () => _acceptInvitation(invitation['id']),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: () => _acceptInvitation(invitation.id),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Accetta'),
                   ),
-                  child: const Text('Accetta'),
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ),
       ),

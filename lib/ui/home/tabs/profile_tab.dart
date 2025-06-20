@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:auto_route/auto_route.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:topdeck_app_flutter/model/entities/deck.dart';
 import 'package:topdeck_app_flutter/model/entities/user_elo.dart';
 import 'package:topdeck_app_flutter/network/supabase_config.dart';
-import 'package:topdeck_app_flutter/repositories/deck_repository.dart';
-import 'package:topdeck_app_flutter/routers/app_router.gr.dart';
 import 'package:topdeck_app_flutter/state_management/cubit/elo/elo_cubit.dart';
 import 'package:topdeck_app_flutter/state_management/cubit/elo/elo_state.dart';
 import 'package:topdeck_app_flutter/utils/elo_config.dart';
+import 'package:topdeck_app_flutter/ui/widgets/theme_bottom_sheet.dart';
 
 @RoutePage(name: 'ProfileTabRoute')
 class ProfileTab extends StatefulWidget {
@@ -106,6 +102,7 @@ class _ProfileTabState extends State<ProfileTab> {
             // ELO Ratings Section
             if (user != null) _buildEloSection(user.id),
             
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Text(
@@ -366,11 +363,11 @@ class _ProfileTabState extends State<ProfileTab> {
           },
         ),
         _buildMenuTile(
-          'Settings',
-          Icons.settings_outlined,
-          Colors.teal,
+          'Tema',
+          Icons.palette_outlined,
+          Colors.deepPurple,
           () {
-            // Navigate to settings page
+            ThemeBottomSheet.show(context);
           },
         ),
         _buildMenuTile(
@@ -441,11 +438,11 @@ class _ProfileTabState extends State<ProfileTab> {
           size: 60,
           color: Colors.purple,
         );
-      case 'Settings':
+      case 'Tema':
         return Icon(
-          Icons.settings_outlined,
+          Icons.palette_outlined,
           size: 60,
-          color: Colors.teal,
+          color: Colors.deepPurple,
         );
       case 'Support':
         return Icon(
