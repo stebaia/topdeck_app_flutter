@@ -358,7 +358,7 @@ class MatchInvitationDetailPageRoute
     extends _i22.PageRouteInfo<MatchInvitationDetailPageRouteArgs> {
   MatchInvitationDetailPageRoute({
     _i23.Key? key,
-    required Map<String, dynamic> invitation,
+    required _i24.MatchInvitation invitation,
     required bool isReceived,
     List<_i22.PageRouteInfo>? children,
   }) : super(
@@ -395,7 +395,7 @@ class MatchInvitationDetailPageRouteArgs {
 
   final _i23.Key? key;
 
-  final Map<String, dynamic> invitation;
+  final _i24.MatchInvitation invitation;
 
   final bool isReceived;
 
@@ -527,10 +527,12 @@ class OpponentSearchPageRoute
     name,
     builder: (data) {
       final args = data.argsAs<OpponentSearchPageRouteArgs>();
-      return _i16.OpponentSearchPage(
-        key: args.key,
-        format: args.format,
-        selectedDeckId: args.selectedDeckId,
+      return _i22.WrappedRoute(
+        child: _i16.OpponentSearchPage(
+          key: args.key,
+          format: args.format,
+          selectedDeckId: args.selectedDeckId,
+        ),
       );
     },
   );

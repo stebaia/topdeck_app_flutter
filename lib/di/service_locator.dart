@@ -182,13 +182,6 @@ class ServiceLocator {
       ),
       
       // Bloc per la ricerca utenti
-      Provider<UserSearchBloc>(
-        create: (context) => UserSearchBloc(
-          context.read<UserSearchRepository>(),
-          context.read<FriendRepository>(),
-        ),
-        dispose: (_, bloc) => bloc.close(),
-      ),
 
       // Bloc per i tornei
       Provider<TournamentBloc>(

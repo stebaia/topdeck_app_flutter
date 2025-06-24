@@ -3,14 +3,19 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:topdeck_app_flutter/model/entities/deck.dart';
 import 'package:topdeck_app_flutter/model/user.dart';
+import 'package:topdeck_app_flutter/repositories/friend_repository.dart';
+import 'package:topdeck_app_flutter/repositories/user_search_repository.dart';
 import 'package:topdeck_app_flutter/routers/app_router.gr.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/match_wizard/match_wizard_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/match_wizard/match_wizard_event.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/match_wizard/match_wizard_state.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/user_search/user_search_bloc.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/user_search/user_search_event.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/user_search/user_search_state.dart';
 import 'package:topdeck_app_flutter/ui/dialogs/match_invitation_dialog.dart';
 
 @RoutePage()
-class OpponentSearchPage extends StatefulWidget {
+class OpponentSearchPage extends StatefulWidget implements AutoRouteWrapper {
   final DeckFormat format;
   final String selectedDeckId;
   
@@ -19,6 +24,16 @@ class OpponentSearchPage extends StatefulWidget {
     required this.format,
     required this.selectedDeckId,
   });
+
+  @override
+  Widget wrappedRoute(BuildContext context) {
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => UserSearchBloc(context.read<UserSearchRepository>(), context.read<FriendRepository>())..getAllMyFriends(),)
+      ],
+      child: this,
+    );
+  }
 
   @override
   State<OpponentSearchPage> createState() => _OpponentSearchPageState();
@@ -62,31 +77,45 @@ class _OpponentSearchPageState extends State<OpponentSearchPage> {
                 contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               ),
               onChanged: (value) {
-                context.read<MatchWizardBloc>().add(SearchUsersEvent(value));
+                if (value.trim().isEmpty) {
+                  context.read<UserSearchBloc>().add(const GetAllMyFriends());
+                } else {
+                  context.read<UserSearchBloc>().add(SearchUsers(value));
+                }
               },
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: BlocBuilder<MatchWizardBloc, MatchWizardState>(
+              child: BlocBuilder<UserSearchBloc, UserSearchState>(
                 builder: (context, state) {
-                  if (state is MatchWizardLoadingState) {
+                  if (state is UserSearchLoading || state is TryToGetAllMyFriendsState) {
                     return const Center(child: CircularProgressIndicator());
-                  } else if (state is MatchWizardErrorState) {
+                  } else if (state is UserSearchError) {
                     return Center(
                       child: Text(
-                        state.errorMessage,
+                        state.message,
                         style: TextStyle(color: Colors.red[700], fontSize: 14),
                         textAlign: TextAlign.center,
                       ),
                     );
-                  } else if (state is UserSearchResultsState) {
+                  } else if (state is ErrorGetAllMyFriendsState) {
+                    return Center(
+                      child: Text(
+                        state.error,
+                        style: TextStyle(color: Colors.red[700], fontSize: 14),
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  } else if (state is UserSearchSuccess) {
                     return _buildSearchResults(state.users);
+                  } else if (state is SuccessGetAllMyFriendsState) {
+                    return _buildSearchResults(state.friends);
                   } else {
                     return Center(
                       child: Text(
                         _searchController.text.isEmpty
-                            ? 'Inizia a digitare per cercare'
-                            : 'Nessun utente trovato',
+                            ? 'I tuoi amici appariranno qui'
+                            : 'Inizia a digitare per cercare',
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 16,

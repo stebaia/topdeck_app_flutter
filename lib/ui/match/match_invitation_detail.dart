@@ -6,12 +6,13 @@ import 'package:topdeck_app_flutter/routers/app_router.gr.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/invitation_list_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/invitation_list_event.dart';
 import 'package:topdeck_app_flutter/ui/match/deck_selection_page.dart';
+import 'package:topdeck_app_flutter/model/entities/match_invitation.dart';
 
 /// Page to display match invitation details
 @RoutePage()
 class MatchInvitationDetailPage extends StatelessWidget {
   /// Invitation data
-  final Map<String, dynamic> invitation;
+  final MatchInvitation invitation;
   
   /// Whether this is a received invitation
   final bool isReceived;
@@ -25,15 +26,15 @@ class MatchInvitationDetailPage extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-    final String senderName = invitation['sender']?['username'] ?? 'Sconosciuto';
-    final String receiverName = invitation['receiver']?['username'] ?? 'Sconosciuto';
+    final String senderName = invitation.senderProfile?.username ?? invitation.senderProfile?.fullName ?? 'Sconosciuto';
+    final String receiverName = invitation.receiverProfile?.username ?? invitation.receiverProfile?.fullName ?? 'Sconosciuto';
     final String opponentName = isReceived ? senderName : receiverName;
     
-    final String status = invitation['status'] ?? 'pending';
-    final String format = invitation['format'] ?? 'Formato sconosciuto';
+    final String status = invitation.status.toString().split('.').last;
+    final String format = invitation.displayFormat ?? 'Formato sconosciuto';
     
-    final String createdAtStr = invitation['created_at'] != null 
-      ? DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(invitation['created_at']))
+    final String createdAtStr = invitation.createdAt != null 
+      ? DateFormat('dd/MM/yyyy HH:mm').format(invitation.createdAt!)
       : 'Data sconosciuta';
       
     Color statusColor;
@@ -107,8 +108,8 @@ class MatchInvitationDetailPage extends StatelessWidget {
                     const SizedBox(height: 8),
                     _buildDetailRow('Formato', format),
                     _buildDetailRow('Data invito', createdAtStr),
-                    if (invitation['message'] != null && invitation['message'].toString().isNotEmpty)
-                      _buildDetailRow('Messaggio', invitation['message']),
+                    if (invitation.message != null && invitation.message!.isNotEmpty)
+                      _buildDetailRow('Messaggio', invitation.message!),
                   ],
                 ),
               ),
@@ -167,7 +168,7 @@ class MatchInvitationDetailPage extends StatelessWidget {
                             child: ElevatedButton(
                               onPressed: () {
                                 context.read<InvitationListBloc>().add(
-                                  DeclineInvitationEvent(invitation['id']),
+                                  DeclineInvitationEvent(invitation.id),
                                 );
                                 Navigator.pop(context);
                               },

@@ -11,11 +11,29 @@ class UserSearchBloc extends Bloc<UserSearchEvent, UserSearchState> {
   UserSearchBloc(this._userSearchRepository, this._friendRepository) : super(const UserSearchInitial()) {
     on<SearchUsers>(_onSearchUsers);
     on<ClearSearch>(_onClearSearch);
+    on<GetAllMyFriends>(_onGetAllMyFriends);
   }
   
   final UserSearchRepository _userSearchRepository;
   final FriendRepository _friendRepository;
   
+
+  void getAllMyFriends() => add(const GetAllMyFriends());
+
+  Future<void> _onGetAllMyFriends(
+    GetAllMyFriends event,
+    Emitter<UserSearchState> emit,
+  ) async {
+    emit(const TryToGetAllMyFriendsState());
+    try {
+      final friends = await _userSearchRepository.getAllMyFriends();
+      emit(SuccessGetAllMyFriendsState(friends));
+    } catch (e) {
+      emit(ErrorGetAllMyFriendsState(e.toString()));
+    } 
+  }
+
+
   Future<void> _onSearchUsers(
     SearchUsers event,
     Emitter<UserSearchState> emit,

@@ -45,3 +45,24 @@ class UserSearchError extends UserSearchState {
   @override
   List<Object?> get props => [message];
 } 
+
+class TryToGetAllMyFriendsState extends UserSearchState {
+  /// Constructor
+  const TryToGetAllMyFriendsState();
+}
+
+class SuccessGetAllMyFriendsState extends UserSearchState {
+  /// Constructor
+  const SuccessGetAllMyFriendsState(this.friends);
+
+  /// Friends
+  final List<UserProfile> friends;
+}
+
+class ErrorGetAllMyFriendsState extends UserSearchState {
+  /// Constructor
+  const ErrorGetAllMyFriendsState(this.error);
+
+  /// Error
+  final String error;
+}

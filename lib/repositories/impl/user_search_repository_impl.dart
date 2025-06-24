@@ -1,3 +1,4 @@
+import 'package:topdeck_app_flutter/model/user.dart';
 import 'package:topdeck_app_flutter/network/service/impl/user_search_service_impl.dart';
 import 'package:topdeck_app_flutter/repositories/user_search_repository.dart';
 
@@ -11,6 +12,11 @@ class UserSearchRepositoryImpl implements UserSearchRepository {
   @override
   Future<List<Map<String, dynamic>>> searchUsers(String query) {
     return _userSearchService.searchUsers(query);
+  }
+
+  @override
+  Future<List<UserProfile>> getAllMyFriends() {
+    return _userSearchService.getAllMyFriends();
   }
   
   @override

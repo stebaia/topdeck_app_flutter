@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:topdeck_app_flutter/model/user.dart';
 
 /// Events for the user search bloc
 abstract class UserSearchEvent extends Equatable {
@@ -26,3 +27,8 @@ class ClearSearch extends UserSearchEvent {
   /// Constructor
   const ClearSearch();
 } 
+
+class GetAllMyFriends extends UserSearchEvent {
+  /// Constructor
+  const GetAllMyFriends();
+}

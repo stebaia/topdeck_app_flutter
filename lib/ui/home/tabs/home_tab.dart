@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:topdeck_app_flutter/routers/app_router.gr.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/invitation_list_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/match_list/match_list_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/match_list/match_list_event.dart';
@@ -19,7 +20,6 @@ class HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<HomeTab> {
-  
   @override
   void initState() {
     super.initState();
@@ -31,7 +31,7 @@ class _HomeTabState extends State<HomeTab> {
   @override
   Widget build(BuildContext context) {
     final myUser = CurrentUserHelper.getCurrentUser(context);
-    
+
     // Se l'utente non è autenticato, non mostrare la pagina
     if (myUser == null) {
       return const Scaffold(
@@ -40,7 +40,7 @@ class _HomeTabState extends State<HomeTab> {
         ),
       );
     }
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Topdeck'),
@@ -55,7 +55,6 @@ class _HomeTabState extends State<HomeTab> {
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Container(
-            
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -65,12 +64,16 @@ class _HomeTabState extends State<HomeTab> {
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
                     children: [
-                      Text('Inviti', style: Theme.of(context).textTheme.titleLarge),
+                      Text('Inviti',
+                          style: Theme.of(context).textTheme.titleLarge),
                       const Spacer(),
                       Row(
                         children: [
-                          Text('vedi tutti', style: Theme.of(context).textTheme.titleMedium),
-                          Icon(Icons.chevron_right, size: 16, color: Theme.of(context).colorScheme.primary),
+                          Text('vedi tutti',
+                              style: Theme.of(context).textTheme.titleMedium),
+                          Icon(Icons.chevron_right,
+                              size: 16,
+                              color: Theme.of(context).colorScheme.primary),
                         ],
                       )
                     ],
@@ -90,34 +93,52 @@ class _HomeTabState extends State<HomeTab> {
                       case InvitationListLoadedState():
                         // Se non ci sono inviti, mostra un messaggio
                         if (state.invitations.isEmpty) {
-                          return Container(
-                            
-                            height: 220,
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surface,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Center(
-                              child: Text(
-                                'Nessun invito disponibile',
-                                style: TextStyle(fontSize: 16),
+                          return GestureDetector(
+                            onTap: () {
+                                      context.router.push(
+                                          const FormatSelectionPageRoute());
+                                    },
+                            child: Container(
+                              height: 180,
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 16.0),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.surface,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.add,
+                                        size: 48,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary),
+                                            Text('Invita per un match',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium)
+                                    
+                                    
+                                  ],
+                                ),
                               ),
                             ),
                           );
                         }
-                        
+
                         return Container(
-                          height: 200,
+                          height: 210,
                           width: double.infinity,
-                         
                           child: ListView.builder(
                             shrinkWrap: true,
                             scrollDirection: Axis.horizontal,
                             itemCount: state.invitations.length,
                             itemBuilder: (context, index) {
                               return MatchInvitationDashboardWidget(
-                                matchInvitation: state.invitations[index], 
+                                matchInvitation: state.invitations[index],
                                 myUser: myUser,
                               );
                             },
@@ -143,7 +164,8 @@ class _HomeTabState extends State<HomeTab> {
                                 const SizedBox(height: 8),
                                 Text(
                                   'Errore nel caricamento inviti',
-                                  style: Theme.of(context).textTheme.titleMedium,
+                                  style:
+                                      Theme.of(context).textTheme.titleMedium,
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
@@ -161,24 +183,26 @@ class _HomeTabState extends State<HomeTab> {
                   },
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Sezione Match Attivi
-               
-                
+
                 // Widget per i match attivi
-                
-                
+
                 const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
                     children: [
-                      Text('Statistiche', style: Theme.of(context).textTheme.titleLarge),
+                      Text('Statistiche',
+                          style: Theme.of(context).textTheme.titleLarge),
                       const Spacer(),
                       Row(
                         children: [
-                          Text('vedi tutti', style: Theme.of(context).textTheme.titleMedium),
-                          Icon(Icons.chevron_right, size: 16, color: Theme.of(context).colorScheme.primary),
+                          Text('vedi tutti',
+                              style: Theme.of(context).textTheme.titleMedium),
+                          Icon(Icons.chevron_right,
+                              size: 16,
+                              color: Theme.of(context).colorScheme.primary),
                         ],
                       )
                     ],
@@ -198,5 +222,4 @@ class _HomeTabState extends State<HomeTab> {
       ),
     );
   }
-
-} 
+}
