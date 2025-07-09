@@ -50,11 +50,20 @@ final List<BlocProvider> _blocs = [
   
   // Match list bloc
   BlocProvider<MatchListBloc>(
-    create: (context) => MatchListBloc(),
+    create: (context) => MatchListBloc(
+      matchRepository: context.read<MatchRepository>(),
+    ),
   ),
   BlocProvider<InvitationListBloc>(
     create: (context) => InvitationListBloc(
       context.read<MatchInvitationRepository>(),
+    ),
+  ),
+
+  // Room bloc
+  BlocProvider<RoomBloc>(
+    create: (context) => RoomBloc(
+      roomRepository: context.read<RoomRepository>(),
     ),
   ),
 

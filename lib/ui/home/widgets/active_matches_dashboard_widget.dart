@@ -5,6 +5,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:topdeck_app_flutter/routers/app_router.gr.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/match_list/match_list_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/match_list/match_list_state.dart';
+import 'package:topdeck_app_flutter/model/entities/match.dart';
 import 'package:topdeck_app_flutter/network/supabase_config.dart';
 
 /// Widget per mostrare i match attivi nella dashboard
@@ -52,7 +53,7 @@ class ActiveMatchesDashboardWidget extends StatelessWidget {
 
   Widget _buildLoadedWidget(BuildContext context, MatchListLoadedState state) {
     // Filtra solo i match attivi (senza vincitore)
-    final activeMatches = state.matches.where((match) => match['winner_id'] == null).toList();
+    final activeMatches = state.matches.where((match) => match.winnerId == null).toList();
     
    
     if (activeMatches.isNotEmpty) {
@@ -102,26 +103,29 @@ class ActiveMatchesDashboardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildActiveMatchCard(BuildContext context, Map<String, dynamic> match) {
+  Widget _buildActiveMatchCard(BuildContext context, Match match) {
     final currentUserId = supabase.auth.currentUser?.id;
-    final isPlayer1 = match['player1_id'] == currentUserId;
+    final isPlayer1 = match.player1Id == currentUserId;
     
-    final String player1Name = match['player1']?['username'] ?? 'Sconosciuto';
-    final String player2Name = match['player2']?['username'] ?? 'Sconosciuto';
+    // Use joined data if available, otherwise fall back to IDs
+    final String player1Name = match.player1?.username ?? 
+                              match.player1Id?.substring(0, 8) ?? 'Giocatore 1';
+    final String player2Name = match.player2?.username ?? 
+                              match.player2Id?.substring(0, 8) ?? 'Giocatore 2';
     final String opponentName = isPlayer1 ? player2Name : player1Name;
     final String currentUserName = isPlayer1 ? player1Name : player2Name;
     
-    final String player1DeckName = match['player1_deck']?['name'] ?? 'Mazzo sconosciuto';
-    final String player2DeckName = match['player2_deck']?['name'] ?? 'Mazzo sconosciuto';
+    final String player1DeckName = match.player1Deck?.name ?? 
+                                  match.player1DeckId?.substring(0, 8) ?? 'Mazzo 1';
+    final String player2DeckName = match.player2Deck?.name ?? 
+                                  match.player2DeckId?.substring(0, 8) ?? 'Mazzo 2';
     final String opponentDeckName = isPlayer1 ? player2DeckName : player1DeckName;
     final String currentUserDeckName = isPlayer1 ? player1DeckName : player2DeckName;
     
-    final format = match['format']?.toUpperCase() ?? 'SCONOSCIUTO';
+    final format = match.format.toUpperCase();
     
     // Calcola il tempo trascorso dall'inizio
-    final date = match['date'] != null 
-        ? DateTime.parse(match['date'])
-        : DateTime.now();
+    final date = match.date ?? DateTime.now();
     final now = DateTime.now();
     final difference = now.difference(date);
     
@@ -144,7 +148,23 @@ class ActiveMatchesDashboardWidget extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: () {
-          context.router.push(MatchDetailPageRoute(match: match));
+          // Create a complete map with all data for the route
+          final matchMap = {
+            'id': match.id,
+            'player1_id': match.player1Id,
+            'player2_id': match.player2Id,
+            'winner_id': match.winnerId,
+            'format': match.format,
+            'date': match.date?.toIso8601String(),
+            'player1_deck_id': match.player1DeckId,
+            'player2_deck_id': match.player2DeckId,
+            // Include joined data if available
+            'player1': match.player1?.toJson(),
+            'player2': match.player2?.toJson(),
+            'player1_deck': match.player1Deck?.toJson(),
+            'player2_deck': match.player2Deck?.toJson(),
+          };
+          context.router.push(MatchDetailPageRoute(match: matchMap));
         },
         child: Container(
           decoration: BoxDecoration(

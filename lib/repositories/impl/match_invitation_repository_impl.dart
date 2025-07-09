@@ -173,4 +173,13 @@ class MatchInvitationRepositoryImpl implements MatchInvitationRepository {
       return null;
     }
   }
+
+  @override
+  Future<void> cancelInvitation(String invitationId) async {
+    try {
+      await _invitationService.cancelInvitation(invitationId);
+    } catch (e) {
+      throw Exception('Failed to cancel invitation: $e');
+    }
+  }
 } 

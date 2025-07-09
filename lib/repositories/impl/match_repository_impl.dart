@@ -7,6 +7,7 @@ class MatchRepositoryImpl implements MatchRepository {
   /// The match service
   final MatchServiceImpl _service;
 
+
   /// Constructor
   MatchRepositoryImpl(this._service);
 
@@ -45,6 +46,19 @@ class MatchRepositoryImpl implements MatchRepository {
     if (json == null) return null;
     return Match.fromJson(json);
   }
+
+  @override
+  Future<List<Match>> getUserMatches() async {
+    try {
+      final jsonList = await _service.getUserMatches();
+      return jsonList.map((json) => Match.fromJson(json)).toList();
+    } catch (e) {
+      print('Error in getUserMatches: $e');
+      throw Exception('Failed to load matches: ${e.toString()}');
+    }
+  }
+
+  
 
   @override
   Future<List<Match>> getAll() async {

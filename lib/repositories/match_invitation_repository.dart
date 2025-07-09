@@ -39,4 +39,6 @@ abstract class MatchInvitationRepository extends BaseRepository<MatchInvitation>
   
   /// Finds pending invitations between two specific users
   Future<MatchInvitation?> findPendingInvitationBetweenUsers(String senderId, String receiverId);
+
+  Future<void> cancelInvitation(String invitationId);
 } 

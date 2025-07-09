@@ -59,6 +59,10 @@ class _HomeTabState extends State<HomeTab> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 16),
+                
+                // BOTTONE TEMPORANEO PER TEST REAL-TIME
+                
+                
                 const ActiveMatchesDashboardWidget(),
                 Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -81,12 +85,22 @@ class _HomeTabState extends State<HomeTab> {
                 ),
                 const SizedBox(height: 16),
                 // Sezione 1: Le tue partite
-                BlocBuilder<InvitationListBloc, InvitationListState>(
+                BlocConsumer<InvitationListBloc, InvitationListState>(
+                  listener: (context, state) {
+                    // Quando un invito viene cancellato, ricarica la lista
+                    if (state is InvitationCancelledState) {
+                      context.read<InvitationListBloc>().loadInvitations();
+                    }
+                  },
                   builder: (context, state) {
                     switch (state) {
                       case InvitationListInitialState():
                         return const SizedBox.shrink();
                       case InvitationListLoadingState():
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      case InvitationCancelledLoadingState():
                         return const Center(
                           child: CircularProgressIndicator(),
                         );
@@ -96,7 +110,9 @@ class _HomeTabState extends State<HomeTab> {
                           return GestureDetector(
                             onTap: () {
                                       context.router.push(
-                                          const FormatSelectionPageRoute());
+                                          const FormatSelectionPageRoute()).then((value) {
+                                            context.read<InvitationListBloc>().loadInvitations();
+                                          });
                                     },
                             child: Container(
                               height: 180,
@@ -164,6 +180,39 @@ class _HomeTabState extends State<HomeTab> {
                                 const SizedBox(height: 8),
                                 Text(
                                   'Errore nel caricamento inviti',
+                                  style:
+                                      Theme.of(context).textTheme.titleMedium,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  state.error,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      case InvitationCancelledErrorState():
+                        return Container(
+                          height: 200,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.error_outline,
+                                  size: 48,
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Errore durante la cancellazione',
                                   style:
                                       Theme.of(context).textTheme.titleMedium,
                                 ),

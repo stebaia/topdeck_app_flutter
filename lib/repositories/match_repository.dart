@@ -14,4 +14,10 @@ abstract class MatchRepository extends BaseRepository<Match> {
   
   /// Updates the winner of a match
   Future<Match> updateWinner(String matchId, String winnerId);
+
+  /// Gets the matches for the current user
+  Future<List<Match>> getUserMatches();
+
+  /// Deletes a match
+  Future<void> delete(String matchId);
 } 

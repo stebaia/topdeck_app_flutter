@@ -16,6 +16,18 @@ Match _$MatchFromJson(Map<String, dynamic> json) => Match(
       player2DeckId: json['player2_deck_id'] as String?,
       date:
           json['date'] == null ? null : DateTime.parse(json['date'] as String),
+      player1: json['player1'] == null
+          ? null
+          : UserProfile.fromJson(json['player1'] as Map<String, dynamic>),
+      player2: json['player2'] == null
+          ? null
+          : UserProfile.fromJson(json['player2'] as Map<String, dynamic>),
+      player1Deck: json['player1_deck'] == null
+          ? null
+          : Deck.fromJson(json['player1_deck'] as Map<String, dynamic>),
+      player2Deck: json['player2_deck'] == null
+          ? null
+          : Deck.fromJson(json['player2_deck'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$MatchToJson(Match instance) => <String, dynamic>{
@@ -27,4 +39,8 @@ Map<String, dynamic> _$MatchToJson(Match instance) => <String, dynamic>{
       'player1_deck_id': instance.player1DeckId,
       'player2_deck_id': instance.player2DeckId,
       'date': instance.date?.toIso8601String(),
+      'player1': instance.player1,
+      'player2': instance.player2,
+      'player1_deck': instance.player1Deck,
+      'player2_deck': instance.player2Deck,
     };

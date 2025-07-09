@@ -1,6 +1,7 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:uuid/uuid.dart';
 import '../base_model.dart';
+import '../user.dart';
 import 'deck.dart';
 
 part 'match.g.dart';
@@ -34,6 +35,20 @@ class Match extends BaseModel {
   /// The date of the match
   final DateTime? date;
 
+  /// Player 1 profile (joined data from edge function)
+  final UserProfile? player1;
+  
+  /// Player 2 profile (joined data from edge function)
+  final UserProfile? player2;
+  
+  /// Player 1 deck (joined data from edge function)
+  @JsonKey(name: 'player1_deck')
+  final Deck? player1Deck;
+  
+  /// Player 2 deck (joined data from edge function)
+  @JsonKey(name: 'player2_deck')
+  final Deck? player2Deck;
+
   /// Constructor
   const Match({
     required super.id,
@@ -44,6 +59,10 @@ class Match extends BaseModel {
     this.player1DeckId,
     this.player2DeckId,
     this.date,
+    this.player1,
+    this.player2,
+    this.player1Deck,
+    this.player2Deck,
   });
 
   /// Creates a new Match instance with a generated UUID
@@ -83,6 +102,10 @@ class Match extends BaseModel {
     String? player1DeckId,
     String? player2DeckId,
     DateTime? date,
+    UserProfile? player1,
+    UserProfile? player2,
+    Deck? player1Deck,
+    Deck? player2Deck,
   }) {
     return Match(
       id: id ?? this.id,
@@ -93,6 +116,10 @@ class Match extends BaseModel {
       player1DeckId: player1DeckId ?? this.player1DeckId,
       player2DeckId: player2DeckId ?? this.player2DeckId,
       date: date ?? this.date,
+      player1: player1 ?? this.player1,
+      player2: player2 ?? this.player2,
+      player1Deck: player1Deck ?? this.player1Deck,
+      player2Deck: player2Deck ?? this.player2Deck,
     );
   }
 } 

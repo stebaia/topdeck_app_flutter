@@ -118,3 +118,26 @@ class InvitationDeclinedState extends InvitationListState {
   @override
   List<Object?> get props => [invitationId];
 } 
+
+class InvitationCancelledState extends InvitationListState {
+  final String invitationId;
+
+  InvitationCancelledState(this.invitationId);
+
+  @override
+  List<Object?> get props => [invitationId];
+}
+
+class InvitationCancelledErrorState extends InvitationListState {
+  final String error;
+
+  InvitationCancelledErrorState(this.error);
+
+  @override
+  List<Object?> get props => [error];
+}
+
+class InvitationCancelledLoadingState extends InvitationListState {
+  @override
+  List<Object?> get props => [];
+}

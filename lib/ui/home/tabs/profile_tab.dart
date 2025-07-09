@@ -7,6 +7,7 @@ import 'package:topdeck_app_flutter/state_management/cubit/elo/elo_cubit.dart';
 import 'package:topdeck_app_flutter/state_management/cubit/elo/elo_state.dart';
 import 'package:topdeck_app_flutter/utils/elo_config.dart';
 import 'package:topdeck_app_flutter/ui/widgets/theme_bottom_sheet.dart';
+import 'package:topdeck_app_flutter/routers/app_router.gr.dart';
 
 @RoutePage(name: 'ProfileTabRoute')
 class ProfileTab extends StatefulWidget {
@@ -363,6 +364,14 @@ class _ProfileTabState extends State<ProfileTab> {
           },
         ),
         _buildMenuTile(
+          'Life Counter',
+          Icons.favorite,
+          Colors.red,
+          () {
+            _navigateToLifeCounter();
+          },
+        ),
+        _buildMenuTile(
           'Tema',
           Icons.palette_outlined,
           Colors.deepPurple,
@@ -450,6 +459,12 @@ class _ProfileTabState extends State<ProfileTab> {
           size: 60,
           color: Colors.blue,
         );
+      case 'Life Counter':
+        return Icon(
+          Icons.favorite,
+          size: 60,
+          color: Colors.red,
+        );
       case 'Logout':
         return Icon(
           Icons.logout,
@@ -516,6 +531,10 @@ class _ProfileTabState extends State<ProfileTab> {
   
   void _navigateToDecksPage() {
     context.router.pushNamed('/decks');
+  }
+  
+  void _navigateToLifeCounter() {
+    context.router.push(const OfflineLifeCounterPageRoute());
   }
   
   void _navigateToEloStatsPage() {

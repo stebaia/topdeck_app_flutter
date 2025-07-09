@@ -1,8 +1,10 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:topdeck_app_flutter/model/entities/match_invitation.dart';
 import 'package:topdeck_app_flutter/model/user.dart';
 import 'package:topdeck_app_flutter/routers/app_router.gr.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/invitation_list_bloc.dart';
 import 'package:topdeck_app_flutter/ui/widgets/user_avatar_widget.dart';
 
 class MatchInvitationDashboardWidget extends StatelessWidget {
@@ -21,7 +23,13 @@ class MatchInvitationDashboardWidget extends StatelessWidget {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
     return GestureDetector(
-      onTap: () => context.pushRoute(MatchInvitationDetailPageRoute(invitation: matchInvitation, isReceived: !isFromMe)),
+      onTap: () => context.pushRoute(MatchInvitationDetailPageRoute(invitation: matchInvitation, isReceived: !isFromMe)).then((_) {
+        // Quando si torna dalla pagina di dettaglio, ricarica gli inviti
+        // Questo è utile se l'invito è stato cancellato o modificato
+        if (context.mounted) {
+          context.read<InvitationListBloc>().loadInvitations();
+        }
+      }),
       child: Container(
         width: 300,
         

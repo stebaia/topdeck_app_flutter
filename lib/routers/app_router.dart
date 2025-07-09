@@ -87,6 +87,27 @@ class AppRouter extends RootStackRouter {
           guards: [AuthGuard()],
         ),
 
+        // Life Counter page
+        AutoRoute(
+          page: LifeCounterPageRoute.page,
+          path: '/match/life-counter',
+          guards: [AuthGuard()],
+        ),
+
+        // Offline Life Counter page
+        AutoRoute(
+          page: OfflineLifeCounterPageRoute.page,
+          path: '/offline-life-counter',
+          guards: [AuthGuard()],
+        ),
+
+        // Test Real-time page
+        AutoRoute(
+          page: TestRealtimePageRoute.page,
+          path: '/test-realtime',
+          guards: [AuthGuard()],
+        ),
+
         // User profile page
         AutoRoute(
           page: UserProfilePageRoute.page,

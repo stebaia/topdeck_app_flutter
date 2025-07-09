@@ -18,6 +18,7 @@ class InvitationListBloc extends Bloc<InvitationListEvent, InvitationListState> 
     on<AcceptInvitationEvent>(_onAcceptInvitation);
     on<AcceptInvitationWithDeckEvent>(_onAcceptInvitationWithDeck);
     on<DeclineInvitationEvent>(_onDeclineInvitation);
+    on<CancelInvitationEvent>(_onCancelInvitation);
     
     // Carica automaticamente il tipo appropriato di inviti all'avvio
     if (isForSentInvitations) {
@@ -28,6 +29,7 @@ class InvitationListBloc extends Bloc<InvitationListEvent, InvitationListState> 
   }
 
   void loadInvitations() => add(LoadInvitationsEvent());
+  void cancelInvitation(String invitationId) => add(CancelInvitationEvent(invitationId));
 
 
   /// Getter per verificare se stiamo mostrando gli inviti inviati
@@ -179,6 +181,21 @@ class InvitationListBloc extends Bloc<InvitationListEvent, InvitationListState> 
       add(LoadInvitationsEvent());
     } catch (e) {
       emit(InvitationListErrorState(e.toString(), forSentInvitations: false));
+    }
+  }
+
+  Future<void> _onCancelInvitation(
+    CancelInvitationEvent event,
+    Emitter<InvitationListState> emit,
+  ) async {
+    
+    emit(InvitationCancelledLoadingState());
+
+    try {
+      await _repository.cancelInvitation(event.invitationId);
+      emit(InvitationCancelledState(event.invitationId));
+    } catch (e) {
+      emit(InvitationCancelledErrorState(e.toString()));
     }
   }
 } 

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/match_list/match_list_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/match_list/match_list_event.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/match_list/match_list_state.dart';
+import 'package:topdeck_app_flutter/model/entities/match.dart';
 import 'package:intl/intl.dart';
 import 'package:topdeck_app_flutter/network/supabase_config.dart';
 
@@ -72,7 +73,7 @@ class _MatchListWidgetState extends State<MatchListWidget> {
     );
   }
 
-  Widget _buildMatchList(List<Map<String, dynamic>> matches) {
+  Widget _buildMatchList(List<Match> matches) {
     if (matches.isEmpty) {
       return Center(
         child: Column(
@@ -119,23 +120,29 @@ class _MatchListWidgetState extends State<MatchListWidget> {
     await Future.delayed(const Duration(milliseconds: 500));
   }
 
-  Widget _buildMatchCard(Map<String, dynamic> match) {
+  Widget _buildMatchCard(Match match) {
     final currentUserId = supabase.auth.currentUser?.id;
-    final isPlayer1 = match['player1_id'] == currentUserId;
+    final isPlayer1 = match.player1Id == currentUserId;
     
-    final String player1Name = match['player1']?['username'] ?? 'Sconosciuto';
-    final String player2Name = match['player2']?['username'] ?? 'Sconosciuto';
+    // Use joined data if available, otherwise fall back to IDs
+    final String player1Name = match.player1?.username ?? 
+                              match.player1Id?.substring(0, 8) ?? 'Giocatore 1';
+    final String player2Name = match.player2?.username ?? 
+                              match.player2Id?.substring(0, 8) ?? 'Giocatore 2';
     
-    final String player1DeckName = match['player1_deck']?['name'] ?? 'Mazzo sconosciuto';
-    final String player2DeckName = match['player2_deck']?['name'] ?? 'Mazzo sconosciuto';
+    // Use joined deck data if available, otherwise fall back to IDs
+    final String player1DeckName = match.player1Deck?.name ?? 
+                                  match.player1DeckId?.substring(0, 8) ?? 'Mazzo 1';
+    final String player2DeckName = match.player2Deck?.name ?? 
+                                  match.player2DeckId?.substring(0, 8) ?? 'Mazzo 2';
     
-    final isWinner = match['winner_id'] == currentUserId;
-    final isCompleted = match['winner_id'] != null;
+    final isWinner = match.winnerId == currentUserId;
+    final isCompleted = match.winnerId != null;
     
-    final format = match['format']?.toUpperCase() ?? 'SCONOSCIUTO';
+    final format = match.format.toUpperCase();
     
-    final date = match['date'] != null 
-        ? DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(match['date']))
+    final date = match.date != null 
+        ? DateFormat('dd/MM/yyyy HH:mm').format(match.date!)
         : 'Data sconosciuta';
     
     final Color cardColor = isCompleted
@@ -187,7 +194,7 @@ class _MatchListWidgetState extends State<MatchListWidget> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: match['winner_id'] == match['player1_id'] 
+                          color: match.winnerId == match.player1Id 
                               ? Colors.green 
                               : Colors.black,
                         ),
@@ -218,7 +225,7 @@ class _MatchListWidgetState extends State<MatchListWidget> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: match['winner_id'] == match['player2_id'] 
+                          color: match.winnerId == match.player2Id 
                               ? Colors.green 
                               : Colors.black,
                         ),

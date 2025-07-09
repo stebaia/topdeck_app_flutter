@@ -15,6 +15,7 @@ import 'package:topdeck_app_flutter/network/service/impl/user_search_service_imp
 import 'package:topdeck_app_flutter/network/service/impl/elo_service_impl.dart';
 import 'package:topdeck_app_flutter/network/service/impl/match_invitation_list_service_impl.dart';
 import 'package:topdeck_app_flutter/network/service/impl/match_invitation_service_impl.dart';
+import 'package:topdeck_app_flutter/network/service/impl/room_service_impl.dart';
 import 'package:topdeck_app_flutter/repositories/auth_repository.dart';
 import 'package:topdeck_app_flutter/repositories/deck_card_repository.dart';
 import 'package:topdeck_app_flutter/repositories/deck_repository.dart';
@@ -38,6 +39,7 @@ import 'package:topdeck_app_flutter/repositories/tournament_repository.dart';
 import 'package:topdeck_app_flutter/repositories/tournament_participant_repository.dart';
 import 'package:topdeck_app_flutter/repositories/tournament_invitation_repository.dart';
 import 'package:topdeck_app_flutter/repositories/user_search_repository.dart';
+import 'package:topdeck_app_flutter/repositories/room_repository.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/friends/friends_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/tournament/tournament_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/user_search/user_search_bloc.dart';
@@ -99,6 +101,11 @@ class ServiceLocator {
       ),
       Provider<MatchInvitationServiceImpl>(
         create: (_) => MatchInvitationServiceImpl(),
+      ),
+      
+      // Room Service
+      Provider<RoomServiceImpl>(
+        create: (_) => RoomServiceImpl(),
       ),
       
       // Repositories - order matters! Dependencies must be registered first
@@ -170,6 +177,13 @@ class ServiceLocator {
         create: (context) => MatchInvitationRepositoryImpl(
           context.read<MatchInvitationListServiceImpl>(),
           context.read<MatchInvitationServiceImpl>(),
+        ),
+      ),
+      
+      // Room Repository
+      Provider<RoomRepository>(
+        create: (context) => RoomRepository(
+          roomService: context.read<RoomServiceImpl>(),
         ),
       ),
       

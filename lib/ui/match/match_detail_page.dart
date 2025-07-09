@@ -1,7 +1,11 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:topdeck_app_flutter/routers/app_router.gr.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/match_list/match_list_bloc.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/match_list/match_list_event.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/match_list/match_list_state.dart';
 
 /// Page to display match details with modern design
 @RoutePage()
@@ -665,16 +669,16 @@ class _MatchDetailPageState extends State<MatchDetailPage>
   Widget _buildInfoRow(String label, String value, IconData icon) {
     return Row(
       children: [
-        Container(
+        Container(  
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor.withOpacity(0.1),
+            color: Colors.blueGrey.withOpacity(0.9),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
             icon,
             size: 16,
-            color: Theme.of(context).primaryColor,
+           
           ),
         ),
         const SizedBox(width: 12),
@@ -748,13 +752,10 @@ class _MatchDetailPageState extends State<MatchDetailPage>
             colors: [Color(0xFFE91E63), Color(0xFFAD1457)],
           ),
           onTap: () {
-            // TODO: Navigate to life counter page
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Life Counter sarà implementato prossimamente!'),
-                backgroundColor: Color(0xFFE91E63),
-              ),
-            );
+            context.pushRoute(LifeCounterPageRoute(
+              matchId: widget.match['id'],
+              match: widget.match,
+            ));
           },
         ),
         
@@ -768,8 +769,8 @@ class _MatchDetailPageState extends State<MatchDetailPage>
             subtitle: 'Registra l\'esito finale del match',
             gradient: LinearGradient(
               colors: [
-                Theme.of(context).primaryColor,
-                Theme.of(context).primaryColor.withOpacity(0.8),
+                Colors.green,
+                Colors.green.withOpacity(0.8),
               ],
             ),
             onTap: () {
@@ -780,6 +781,20 @@ class _MatchDetailPageState extends State<MatchDetailPage>
                   }
                 });
             },
+          ),
+        
+        const SizedBox(height: 16),
+        
+        // Cancel Match Button (only if match not completed)
+        if (!isMatchCompleted)
+          _buildModernActionButton(
+            icon: Icons.cancel_outlined,
+            title: 'Cancella Match',
+            subtitle: 'Annulla questa partita (non influisce sull\'ELO)',
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFF5722), Color(0xFFD84315)],
+            ),
+            onTap: () => _showCancelMatchDialog(),
           ),
       ],
     );
@@ -866,6 +881,134 @@ class _MatchDetailPageState extends State<MatchDetailPage>
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _showCancelMatchDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.orange,
+              size: 28,
+            ),
+            const SizedBox(width: 12),
+            const Text('Conferma Cancellazione'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Sei sicuro di voler cancellare questo match?',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: Colors.blue.shade600,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Questa azione non influirà sui tuoi punti ELO',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.blue.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Annulla'),
+          ),
+          BlocConsumer<MatchListBloc, MatchListState>(
+            listener: (context, state) {
+              if (state is MatchCancelledState) {
+                Navigator.of(context).pop(); // Chiudi il dialog
+                Navigator.of(context).pop(true); // Torna indietro con risultato
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        Icon(Icons.check_circle, color: Colors.white),
+                        const SizedBox(width: 8),
+                        const Text('Match cancellato con successo'),
+                      ],
+                    ),
+                    backgroundColor: Colors.green,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              } else if (state is MatchCancelErrorState) {
+                Navigator.of(context).pop(); // Chiudi il dialog
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        Icon(Icons.error_outline, color: Colors.white),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text('Errore: ${state.error}')),
+                      ],
+                    ),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+            builder: (context, state) {
+              final isLoading = state is MatchCancellingState && 
+                                state.matchId == widget.match['id'];
+              
+              return ElevatedButton(
+                onPressed: isLoading 
+                  ? null 
+                  : () {
+                      context.read<MatchListBloc>().add(
+                        CancelMatchEvent(widget.match['id']),
+                      );
+                    },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                child: isLoading
+                  ? SizedBox(
+                      height: 16,
+                      width: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Text('Cancella'),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

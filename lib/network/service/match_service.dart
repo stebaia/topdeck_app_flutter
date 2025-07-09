@@ -15,7 +15,7 @@ abstract class MatchService {
   /// Update the winner of a match
   Future<Map<String, dynamic>> updateWinner(String matchId, String winnerId);
   
-  /// Delete a match
+  /// Cancel a match (only for ongoing matches)
   Future<void> delete(String id);
   
   /// Finds matches by player ID (either player1 or player2)

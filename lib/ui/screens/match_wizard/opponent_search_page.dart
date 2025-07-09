@@ -13,6 +13,7 @@ import 'package:topdeck_app_flutter/state_management/blocs/user_search/user_sear
 import 'package:topdeck_app_flutter/state_management/blocs/user_search/user_search_event.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/user_search/user_search_state.dart';
 import 'package:topdeck_app_flutter/ui/dialogs/match_invitation_dialog.dart';
+import 'package:topdeck_app_flutter/utils/toast_service.dart';
 
 @RoutePage()
 class OpponentSearchPage extends StatefulWidget implements AutoRouteWrapper {
@@ -197,12 +198,7 @@ class _OpponentSearchPageState extends State<OpponentSearchPage> {
     if (result == true) {
       // L'invito è stato inviato con successo
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Invito inviato a ${opponent.username}'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      ToastService.showSuccess(context, 'Invito inviato a ${opponent.username}');
       
       // Torniamo alla home
       if (!mounted) return;

@@ -68,3 +68,12 @@ class DeclineInvitationEvent extends InvitationListEvent {
   @override
   List<Object?> get props => [invitationId];
 } 
+
+class CancelInvitationEvent extends InvitationListEvent {
+  final String invitationId;
+
+  CancelInvitationEvent(this.invitationId);
+
+  @override
+  List<Object?> get props => [invitationId];
+}

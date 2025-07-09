@@ -111,17 +111,34 @@ class MatchServiceImpl implements MatchService {
     }
   }
   
-  /// Delete a match
+  /// Delete a match (actually cancels it using edge function)
   @override
   Future<void> delete(String id) async {
     try {
-      await client
-        .from('matches')
-        .delete()
-        .eq('id', id);
+      final session = await client.auth.currentSession;
+      if (session == null || session.accessToken.isEmpty) {
+        throw AuthException('No valid session found');
+      }
+
+      final response = await client.functions.invoke(
+        'delete-match',
+        body: {
+          'match_id': id,
+        },
+        headers: {
+          'Authorization': 'Bearer ${session.accessToken}',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.status != 200) {
+        throw Exception(response.data['error'] ?? 'Failed to cancel match');
+      }
+
+      print('Successfully cancelled match: ${response.data}');
     } catch (e) {
       print('Error in delete: $e');
-      throw Exception('Failed to delete match: $e');
+      throw Exception('Failed to cancel match: $e');
     }
   }
   
@@ -181,7 +198,7 @@ class MatchServiceImpl implements MatchService {
   Future<List<Map<String, dynamic>>> getUserMatches() async {
     try {
       final response = await client.functions.invoke(
-        'see-my-future-match',
+        'see-my-matches',
         method: HttpMethod.get,
       );
 

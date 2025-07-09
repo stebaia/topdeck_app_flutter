@@ -193,4 +193,27 @@ class MatchInvitationServiceImpl {
       throw Exception('Failed to decline invitation: $e');
     }
   }
+
+  Future<void> cancelInvitation(String invitationId) async {
+    try {
+      final session = await client.auth.currentSession;
+      if(session == null || session.accessToken.isEmpty) {
+        throw AuthException('No valid session found');
+      }
+      
+      final response = await client.functions.invoke('cancel-match-invitation', body: {
+        'invitation_id': invitationId,
+        
+      }, headers: {
+            'Authorization': 'Bearer ${session.accessToken}',
+            'Content-Type': 'application/json',
+          },);
+
+      if (response.status != 200) {
+        throw Exception('Failed to cancel invitation: ${response.data}');
+      }
+    } catch (e) {
+      throw Exception('Failed to cancel invitation: $e');
+    }
+  }
 } 

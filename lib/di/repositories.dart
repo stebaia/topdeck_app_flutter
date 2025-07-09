@@ -2,21 +2,24 @@ part of 'dependency_injector.dart';
 
 final List<RepositoryProvider> _repositories = [
   RepositoryProvider<DeckRepository>(
-    create: (context) => Provider.of<DeckRepository>(context, listen: false),
+    create: (context) => context.read<DeckRepository>(),
   ),
   RepositoryProvider<EloRepository>(
-    create: (context) => Provider.of<EloRepository>(context, listen: false),
+    create: (context) => context.read<EloRepository>(),
   ),
   RepositoryProvider<TournamentRepository>(
-    create: (context) => Provider.of<TournamentRepository>(context, listen: false),
+    create: (context) => context.read<TournamentRepository>(),
   ),
   RepositoryProvider<TournamentParticipantRepository>(
-    create: (context) => Provider.of<TournamentParticipantRepository>(context, listen: false),
+    create: (context) => context.read<TournamentParticipantRepository>(),
   ),
   RepositoryProvider<TournamentInvitationRepository>(
-    create: (context) => Provider.of<TournamentInvitationRepository>(context, listen: false),
+    create: (context) => context.read<TournamentInvitationRepository>(),
   ),
   RepositoryProvider<MatchInvitationRepository>(
-    create: (context) => Provider.of<MatchInvitationRepository>(context, listen: false),
+    create: (context) => context.read<MatchInvitationRepository>(),
+  ),
+  RepositoryProvider<RoomRepository>(
+    create: (context) => context.read<RoomRepository>(),
   ),
 ];

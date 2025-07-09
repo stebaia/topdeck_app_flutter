@@ -9,6 +9,7 @@ import 'package:pine/utils/mapper.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
+import 'package:topdeck_app_flutter/repositories/impl/match_repository_impl.dart';
 import 'package:topdeck_app_flutter/state_management/cubit/decks/decks_cubit.dart';
 import 'package:topdeck_app_flutter/di/service_locator.dart';
 import 'package:topdeck_app_flutter/repositories/auth_repository.dart';
@@ -30,6 +31,8 @@ import 'package:topdeck_app_flutter/state_management/blocs/user_search/user_sear
 import 'package:topdeck_app_flutter/state_management/blocs/match_list/match_list_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/blocs/invitation_list/invitation_list_bloc.dart';
 import 'package:topdeck_app_flutter/repositories/match_invitation_repository.dart';
+import 'package:topdeck_app_flutter/repositories/room_repository.dart';
+import 'package:topdeck_app_flutter/state_management/blocs/room/room_bloc.dart';
 import 'package:topdeck_app_flutter/state_management/cubit/theme/theme_cubit.dart';
 part 'blocs.dart';
 part 'mappers.dart';
