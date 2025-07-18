@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:topdeck_app_flutter/model/entities/friend_request.dart';
 import 'package:topdeck_app_flutter/model/user.dart';
 import 'package:topdeck_app_flutter/routers/app_router.gr.dart';
@@ -21,14 +23,12 @@ class FriendsTab extends StatefulWidget {
   State<FriendsTab> createState() => _FriendsTabState();
 }
 
-class _FriendsTabState extends State<FriendsTab> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _FriendsTabState extends State<FriendsTab> {
   final TextEditingController _searchController = TextEditingController();
   
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
     _searchController.addListener(_onSearchChanged);
     
     // Carica i dati iniziali
@@ -37,18 +37,14 @@ class _FriendsTabState extends State<FriendsTab> with SingleTickerProviderStateM
   
   @override
   void dispose() {
-    _tabController.dispose();
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
   }
   
   void _loadInitialData() {
-    // Carica le richieste di amicizia pendenti
-    context.read<FriendsBloc>().add(LoadFriendRequestsEvent());
-    
-    // Carica la lista degli amici
-    context.read<FriendsBloc>().add(LoadFriendsEvent());
+    // Carica entrambi i dati insieme
+    context.read<FriendsBloc>().add(LoadFriendsAndRequestsEvent());
   }
   
   void _onSearchChanged() {
@@ -73,8 +69,8 @@ class _FriendsTabState extends State<FriendsTab> with SingleTickerProviderStateM
               backgroundColor: Colors.green,
             ),
           );
-          // Cambia tab per mostrare la lista amici
-          _tabController.animateTo(2); // Indice della tab "Amici"
+          // Ricarica i dati dopo aver accettato la richiesta
+          _loadInitialData();
         } else if (state is FriendRequestDeclined) {
           // Mostra messaggio quando una richiesta viene rifiutata
           ScaffoldMessenger.of(context).showSnackBar(
@@ -102,9 +98,17 @@ class _FriendsTabState extends State<FriendsTab> with SingleTickerProviderStateM
         }
       },
       child: Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
         appBar: AppBar(
-          title: const Text('Amici'),
+          title: const Text('Friends'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
           centerTitle: true,
+          titleTextStyle: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
           actions: [
             IconButton(
               icon: const Icon(Icons.bug_report),
@@ -114,23 +118,8 @@ class _FriendsTabState extends State<FriendsTab> with SingleTickerProviderStateM
               },
             ),
           ],
-          bottom: TabBar(
-            controller: _tabController,
-            tabs: const [
-              Tab(text: 'Cerca'),
-              Tab(text: 'Richieste'),
-              Tab(text: 'Amici'),
-            ],
-          ),
         ),
-        body: TabBarView(
-          controller: _tabController,
-          children: [
-            _buildSearchTab(),
-            _buildRequestsTab(),
-            _buildFriendsTab(),
-          ],
-        ),
+        body: _buildUnifiedFriendsPage(),
       ),
     );
   }
@@ -182,85 +171,240 @@ class _FriendsTabState extends State<FriendsTab> with SingleTickerProviderStateM
     );
   }
   
-  Widget _buildSearchTab() {
+  Widget _buildUnifiedFriendsPage() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Search Section
+          _buildSearchSection(),
+          const SizedBox(height: 24),
+          
+          // Friend Requests Section
+          _buildFriendRequestsSection(),
+          const SizedBox(height: 24),
+          
+          // Friends Section
+          _buildFriendsSection(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchSection() {
     return Column(
       children: [
+        // Search Input
         Padding(
           padding: const EdgeInsets.all(16.0),
-          child: TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: 'Cerca utenti...',
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: _searchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                        context.read<UserSearchBloc>().add(const ClearSearch());
-                      },
-                    )
-                  : null,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainer,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+              ),
+            ),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search users...',
+                hintStyle: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                prefixIcon: Icon(
+                  CupertinoIcons.search,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(
+                          CupertinoIcons.clear,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        onPressed: () {
+                          _searchController.clear();
+                          context.read<UserSearchBloc>().add(const ClearSearch());
+                        },
+                      )
+                    : null,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               ),
             ),
           ),
         ),
-        Expanded(
-          child: BlocBuilder<UserSearchBloc, UserSearchState>(
-            builder: (context, state) {
-              if (state is UserSearchLoading) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              } else if (state is UserSearchSuccess) {
-                if (state.users.isEmpty) {
-                  return const Center(
-                    child: Text('Nessun utente trovato'),
-                  );
-                }
-                return ListView.builder(
-                  itemCount: state.users.length,
-                  itemBuilder: (context, index) {
-                    final user = state.users[index];
-                    return _buildUserListTile(user);
-                  },
-                );
-              } else if (state is UserSearchError) {
-                return Center(
-                  child: Text('Errore: ${state.message}'),
-                );
-              } else {
-                return const Center(
-                  child: Text('Cerca utenti per nome o username'),
+        BlocBuilder<UserSearchBloc, UserSearchState>(
+          builder: (context, state) {
+            if (state is UserSearchLoading) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            } else if (state is UserSearchSuccess) {
+              if (state.users.isEmpty) {
+                return _buildEmptyState(
+                  icon: CupertinoIcons.search,
+                  title: 'No users found',
+                  subtitle: 'Try a different search term',
                 );
               }
-            },
-          ),
+              return Column(
+                children: state.users.map((user) => _buildUserCard(user)).toList(),
+              );
+            } else if (state is UserSearchError) {
+              return _buildEmptyState(
+                icon: CupertinoIcons.exclamationmark_triangle,
+                title: 'Error',
+                subtitle: state.message,
+              );
+            } else {
+              return _buildEmptyState(
+                icon: CupertinoIcons.person_2,
+                title: 'Search for friends',
+                subtitle: 'Enter a username or name to find users',
+              );
+            }
+          },
         ),
       ],
     );
   }
   
-  Widget _buildUserListTile(UserProfile user) {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundImage: user.avatarUrl != null ? NetworkImage(user.avatarUrl!) : null,
-        backgroundColor: Colors.grey.shade400,
-        child: user.avatarUrl == null
-            ? Text(
-                user.username.isNotEmpty ? user.username[0].toUpperCase() : '?',
-                style: const TextStyle(color: Colors.white),
-              )
-            : null,
+  Widget _buildUserCard(UserProfile user) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      title: Text(user.username),
-      subtitle: user.displayName != null ? Text(user.displayName!) : null,
-      onTap: () {
-        // Naviga al profilo dell'utente
-        _navigateToUserProfile(user);
-      },
+      child: InkWell(
+        onTap: () => _navigateToUserProfile(user),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // Avatar
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: user.avatarUrl == null
+                      ? LinearGradient(
+                          colors: [
+                            Theme.of(context).colorScheme.primary,
+                            Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+                          ],
+                        )
+                      : null,
+                  image: user.avatarUrl != null
+                      ? DecorationImage(
+                          image: NetworkImage(user.avatarUrl!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: user.avatarUrl == null
+                    ? Icon(
+                        CupertinoIcons.person_fill,
+                        size: 28,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 16),
+              // User info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user.username,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    if (user.displayName != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        user.displayName!,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              // Action button
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  CupertinoIcons.person_add,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            size: 48,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: 14,
+              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
   
@@ -275,109 +419,430 @@ class _FriendsTabState extends State<FriendsTab> with SingleTickerProviderStateM
     );
   }
   
-  Widget _buildRequestsTab() {
-    return BlocBuilder<FriendsBloc, FriendsState>(
-      builder: (context, state) {
-        if (state is FriendsLoading) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (state is FriendRequestsLoaded) {
-          final requests = state.requests;
-          
-          if (requests.isEmpty) {
-            return const Center(
-              child: Text('Non hai richieste di amicizia in sospeso'),
-            );
-          }
-          
-          return ListView.builder(
-            itemCount: requests.length,
-            itemBuilder: (context, index) {
-              final request = requests[index];
-              return _buildFriendRequestTile(request);
-            },
-          );
-        } else {
-          return const SizedBox.shrink();
-        }
-      },
+  Widget _buildFriendRequestsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Friend Requests',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+        const SizedBox(height: 16),
+        BlocBuilder<FriendsBloc, FriendsState>(
+          builder: (context, state) {
+            if (state is FriendsLoading) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is FriendsAndRequestsLoaded) {
+              final requests = state.requests;
+              
+              if (requests.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'No pending friend requests',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                );
+              }
+              
+              return Column(
+                children: requests.map((request) => _buildFriendRequestCard(request)).toList(),
+              );
+            } else if (state is FriendRequestsLoaded) {
+              final requests = state.requests;
+              
+              if (requests.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'No pending friend requests',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                );
+              }
+              
+              return Column(
+                children: requests.map((request) => _buildFriendRequestCard(request)).toList(),
+              );
+            } else {
+              return const SizedBox.shrink();
+            }
+          },
+        ),
+      ],
     );
   }
   
-  Widget _buildFriendRequestTile(FriendRequest request) {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundImage: request.sender?.avatarUrl != null 
-            ? NetworkImage(request.sender!.avatarUrl!) 
-            : null,
-        backgroundColor: Colors.grey.shade400,
-        child: request.sender?.avatarUrl == null
-            ? Text(
-                request.sender?.username.isNotEmpty == true 
-                    ? request.sender!.username[0].toUpperCase() 
-                    : '?',
-                style: const TextStyle(color: Colors.white),
-              )
-            : null,
-      ),
-      title: Text(request.sender?.username ?? 'Utente'),
-      subtitle: const Text('Vuole aggiungerti come amico'),
-      onTap: request.sender != null ? () {
-        // Naviga al profilo dell'utente che ha inviato la richiesta
-        _navigateToUserProfile(request.sender!);
-      } : null,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.check, color: Colors.green),
-            onPressed: () {
-              context.read<FriendsBloc>().add(AcceptFriendRequestEvent(request.senderId));
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.close, color: Colors.red),
-            onPressed: () {
-              context.read<FriendsBloc>().add(DeclineFriendRequestEvent(request.senderId));
-            },
+  Widget _buildFriendRequestCard(FriendRequest request) {
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    final isIncoming = request.recipientId == currentUserId;
+    final otherUser = request.sender;
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isIncoming 
+              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)
+              : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
+      child: InkWell(
+        onTap: otherUser != null ? () => _navigateToUserProfile(otherUser) : null,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // Avatar
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: otherUser?.avatarUrl == null
+                      ? LinearGradient(
+                          colors: [
+                            Theme.of(context).colorScheme.primary,
+                            Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+                          ],
+                        )
+                      : null,
+                  image: otherUser?.avatarUrl != null
+                      ? DecorationImage(
+                          image: NetworkImage(otherUser!.avatarUrl!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: otherUser?.avatarUrl == null
+                    ? Icon(
+                        CupertinoIcons.person_fill,
+                        size: 28,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 16),
+              // User info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      otherUser?.username ?? 'User',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          isIncoming ? CupertinoIcons.arrow_down_circle : CupertinoIcons.arrow_up_circle,
+                          size: 16,
+                          color: isIncoming ? Colors.blue : Colors.orange,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          isIncoming ? 'Wants to be your friend' : 'Request sent',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // Action buttons
+              if (isIncoming) ...[
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(CupertinoIcons.check_mark, color: Colors.green),
+                        onPressed: () {
+                          context.read<FriendsBloc>().add(AcceptFriendRequestEvent(request.senderId));
+                        },
+                      ),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(CupertinoIcons.xmark, color: Colors.red),
+                        onPressed: () {
+                          context.read<FriendsBloc>().add(DeclineFriendRequestEvent(request.senderId));
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    CupertinoIcons.clock,
+                    size: 20,
+                    color: Colors.orange,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
   
-  Widget _buildFriendsTab() {
-    return BlocBuilder<FriendsBloc, FriendsState>(
-      builder: (context, state) {
-        if (state is FriendsLoading) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (state is FriendsLoaded) {
-          final friends = state.friends;
-          
-          if (friends.isEmpty) {
-            return const Center(
-              child: Text('Non hai ancora amici'),
-            );
-          }
-          
-          return ListView.builder(
-            itemCount: friends.length,
-            itemBuilder: (context, index) {
-              final friend = friends[index];
-              return _buildUserListTile(friend);
-            },
-          );
-        } else {
-          return Center(
-            child: TextButton.icon(
-              onPressed: () {
-                context.read<FriendsBloc>().add(LoadFriendsEvent());
-              },
-              icon: const Icon(Icons.refresh),
-              label: const Text('Carica amici'),
-            ),
-          );
-        }
-      },
+  Widget _buildFriendsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'My Friends',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+        const SizedBox(height: 16),
+        BlocBuilder<FriendsBloc, FriendsState>(
+          builder: (context, state) {
+            if (state is FriendsLoading) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is FriendsAndRequestsLoaded) {
+              final friends = state.friends;
+              
+              if (friends.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'No friends yet. Search for users to add as friends!',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                );
+              }
+              
+              return Column(
+                children: friends.map((friend) => _buildFriendCard(friend)).toList(),
+              );
+            } else if (state is FriendsLoaded) {
+              final friends = state.friends;
+              
+              if (friends.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'No friends yet. Search for users to add as friends!',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                );
+              }
+              
+              return Column(
+                children: friends.map((friend) => _buildFriendCard(friend)).toList(),
+              );
+            } else {
+              return Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      CupertinoIcons.refresh,
+                      size: 32,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Load Friends',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    FilledButton.icon(
+                      onPressed: () {
+                        context.read<FriendsBloc>().add(LoadFriendsAndRequestsEvent());
+                      },
+                      icon: const Icon(CupertinoIcons.refresh),
+                      label: const Text('Refresh'),
+                    ),
+                  ],
+                ),
+              );
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFriendCard(UserProfile friend) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () => _navigateToUserProfile(friend),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // Avatar
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: friend.avatarUrl == null
+                      ? LinearGradient(
+                          colors: [
+                            Theme.of(context).colorScheme.primary,
+                            Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+                          ],
+                        )
+                      : null,
+                  image: friend.avatarUrl != null
+                      ? DecorationImage(
+                          image: NetworkImage(friend.avatarUrl!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: friend.avatarUrl == null
+                    ? Icon(
+                        CupertinoIcons.person_fill,
+                        size: 28,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 16),
+              // User info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      friend.username,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    if (friend.displayName != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        friend.displayName!,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              // Status indicator
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  CupertinoIcons.check_mark_circled_solid,
+                  size: 20,
+                  color: Colors.green,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 } 

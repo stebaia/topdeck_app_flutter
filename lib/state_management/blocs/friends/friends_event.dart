@@ -12,6 +12,9 @@ class LoadFriendRequestsEvent extends FriendsEvent {}
 /// Evento per caricare la lista degli amici
 class LoadFriendsEvent extends FriendsEvent {}
 
+/// Evento per caricare sia amici che richieste
+class LoadFriendsAndRequestsEvent extends FriendsEvent {}
+
 /// Evento per inviare una richiesta di amicizia
 class SendFriendRequestEvent extends FriendsEvent {
   /// ID dell'utente a cui inviare la richiesta

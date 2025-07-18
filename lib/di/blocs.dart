@@ -72,4 +72,11 @@ final List<BlocProvider> _blocs = [
     create: (context) => ThemeCubit()..loadTheme(),
   ),
 
+  // ELO cubit
+  BlocProvider<EloCubit>(
+    create: (context) => EloCubit(
+      eloRepository: context.read<EloRepository>(),
+    ),
+  ),
+
 ];

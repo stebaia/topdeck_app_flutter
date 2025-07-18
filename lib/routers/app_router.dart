@@ -29,7 +29,7 @@ class AppRouter extends RootStackRouter {
           AuthGuard()
         ], children: [
           AutoRoute(page: HomeTabRoute.page, path: 'home'),
-          AutoRoute(page: TournamentsTabRoute.page, path: 'tournaments'),
+          AutoRoute(page: StatisticsTabRoute.page, path: 'statistics'),
           AutoRoute(page: FriendsTabRoute.page, path: 'friends'),
           AutoRoute(page: ProfileTabRoute.page, path: 'profile'),
         ]),

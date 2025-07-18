@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:topdeck_app_flutter/model/entities/deck.dart';
 import 'package:topdeck_app_flutter/model/user.dart';
 import 'package:topdeck_app_flutter/repositories/deck_repository.dart';
@@ -29,6 +30,52 @@ class UserProfilePage extends StatefulWidget {
 }
 
 class _UserProfilePageState extends State<UserProfilePage> {
+  final _supabase = Supabase.instance.client;
+
+  /// Get detailed friendship status
+  Future<Map<String, dynamic>> _getFriendshipStatus() async {
+    try {
+      final currentUserId = _supabase.auth.currentUser?.id;
+      if (currentUserId == null) {
+        return {'status': 'error', 'message': 'User not authenticated'};
+      }
+      
+      // Check if user is trying to add themselves
+      if (currentUserId == widget.userId) {
+        return {'status': 'self', 'message': 'Cannot add yourself as friend'};
+      }
+      
+      // Check existing friendship status
+      final existingRelations = await _supabase
+          .from('friends')
+          .select()
+          .or('and(user_id.eq.$currentUserId,friend_id.eq.${widget.userId}),and(user_id.eq.${widget.userId},friend_id.eq.$currentUserId)');
+      
+      if (existingRelations.isEmpty) {
+        return {'status': 'none', 'message': 'Can send friend request'};
+      }
+      
+      final relation = existingRelations.first;
+      final status = relation['status'];
+      final isOutgoing = relation['user_id'] == currentUserId;
+      
+      if (status == 'accepted') {
+        return {'status': 'friends', 'message': 'Already friends'};
+      } else if (status == 'pending') {
+        if (isOutgoing) {
+          return {'status': 'request_sent', 'message': 'Request sent'};
+        } else {
+          return {'status': 'request_received', 'message': 'Request received'};
+        }
+      }
+      
+      return {'status': 'none', 'message': 'Can send friend request'};
+    } catch (e) {
+      print('Error checking friendship status: $e');
+      return {'status': 'error', 'message': 'Error checking status'};
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -106,8 +153,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
   Widget _buildActions() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: FutureBuilder<bool>(
-        future: context.read<FriendRepository>().isFriendOrPending(widget.userId),
+      child: FutureBuilder<Map<String, dynamic>>(
+        future: _getFriendshipStatus(),
         builder: (context, snapshot) {
           // Durante il caricamento
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -117,23 +164,79 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 width: 20, height: 20,
                 child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
               ),
-              label: const Text('Verifica stato...'),
+              label: const Text('Checking status...'),
               style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 48)),
             );
           }
           
-          // Se l'utente è già amico o c'è una richiesta pendente
-          if (snapshot.hasData && snapshot.data == true) {
+          if (snapshot.hasError) {
+            return ElevatedButton.icon(
+              onPressed: () => setState(() {}),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+              style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 48)),
+            );
+          }
+          
+          final statusData = snapshot.data;
+          if (statusData == null) {
+            return const SizedBox.shrink();
+          }
+          
+          final status = statusData['status'];
+          
+          // User trying to add themselves
+          if (status == 'self') {
+            return ElevatedButton.icon(
+              onPressed: null,
+              icon: const Icon(Icons.person),
+              label: const Text('Your Profile'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+                backgroundColor: Colors.grey,
+              ),
+            );
+          }
+          
+          // Already friends
+          if (status == 'friends') {
             return ElevatedButton.icon(
               onPressed: () {
-                // Mostra dialog per rimuovere l'amicizia
                 _showRemoveFriendDialog();
               },
               icon: const Icon(Icons.check, color: Colors.white),
-              label: const Text('Amici', style: TextStyle(fontSize: 16,color: Colors.white)),
+              label: const Text('Friends', style: TextStyle(fontSize: 16, color: Colors.white)),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 48),
                 backgroundColor: Colors.green,
+              ),
+            );
+          }
+          
+          // Request sent (outgoing)
+          if (status == 'request_sent') {
+            return ElevatedButton.icon(
+              onPressed: null,
+              icon: const Icon(Icons.schedule),
+              label: const Text('Request Sent'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+          
+          // Request received (incoming)
+          if (status == 'request_received') {
+            return ElevatedButton.icon(
+              onPressed: () {
+                context.read<FriendsBloc>().add(AcceptFriendRequestEvent(widget.userId));
+              },
+              icon: const Icon(Icons.person_add),
+              label: const Text('Accept Friend Request'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+                backgroundColor: Colors.blue,
               ),
             );
           }

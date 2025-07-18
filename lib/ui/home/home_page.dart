@@ -20,7 +20,7 @@ class _HomePageState extends State<HomePage> {
       child: AutoTabsRouter(
         routes: const [
           HomeTabRoute(),
-          TournamentsTabRoute(),
+          StatisticsTabRoute(),
           FriendsTabRoute(),
           ProfileTabRoute(),
         ],
@@ -49,8 +49,8 @@ class _HomePageState extends State<HomePage> {
                   label: 'Home',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(CupertinoIcons.flowchart),
-                  label: 'Tournaments',
+                  icon: Icon(CupertinoIcons.chart_bar),
+                  label: 'Statistics',
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(CupertinoIcons.person_2),

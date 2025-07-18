@@ -14,6 +14,7 @@ class FriendsBloc extends Bloc<FriendsEvent, FriendsState> {
         super(FriendsInitial()) {
     on<LoadFriendRequestsEvent>(_onLoadFriendRequests);
     on<LoadFriendsEvent>(_onLoadFriends);
+    on<LoadFriendsAndRequestsEvent>(_onLoadFriendsAndRequests);
     on<SendFriendRequestEvent>(_onSendFriendRequest);
     on<AcceptFriendRequestEvent>(_onAcceptFriendRequest);
     on<DeclineFriendRequestEvent>(_onDeclineFriendRequest);
@@ -66,6 +67,32 @@ class FriendsBloc extends Bloc<FriendsEvent, FriendsState> {
       print('FriendsBloc: Emitted FriendsError state');
     }
   }
+
+  /// Gestisce l'evento LoadFriendsAndRequestsEvent
+  Future<void> _onLoadFriendsAndRequests(
+    LoadFriendsAndRequestsEvent event,
+    Emitter<FriendsState> emit,
+  ) async {
+    print('FriendsBloc: Loading both friends and requests');
+    emit(FriendsLoading());
+    try {
+      print('FriendsBloc: Calling repository methods');
+      final friends = await _friendRepository.getFriends();
+      final requests = await _friendRepository.getPendingFriendRequests();
+      
+      print('FriendsBloc: Loaded ${friends.length} friends and ${requests.length} requests');
+      
+      emit(FriendsAndRequestsLoaded(
+        friends: friends,
+        requests: requests,
+      ));
+      print('FriendsBloc: Emitted FriendsAndRequestsLoaded state');
+    } catch (e) {
+      print('FriendsBloc ERROR: Failed to load friends and requests: $e');
+      emit(FriendsError('Failed to load friends and requests: ${e.toString()}'));
+      print('FriendsBloc: Emitted FriendsError state');
+    }
+  }
   
   /// Gestisce l'evento SendFriendRequestEvent
   Future<void> _onSendFriendRequest(
@@ -91,11 +118,8 @@ class FriendsBloc extends Bloc<FriendsEvent, FriendsState> {
       await _friendRepository.acceptFriendRequest(event.friendId);
       emit(FriendRequestAccepted(event.friendId));
       
-      // Ricarica la lista delle richieste dopo aver accettato
-      add(LoadFriendRequestsEvent());
-      
-      // Ricarica anche la lista degli amici
-      add(LoadFriendsEvent());
+      // Ricarica entrambi i dati con l'evento unificato
+      add(LoadFriendsAndRequestsEvent());
     } catch (e) {
       emit(FriendsError('Failed to accept friend request: ${e.toString()}'));
     }
@@ -111,8 +135,8 @@ class FriendsBloc extends Bloc<FriendsEvent, FriendsState> {
       await _friendRepository.declineFriendRequest(event.friendId);
       emit(FriendRequestDeclined(event.friendId));
       
-      // Ricarica la lista delle richieste dopo aver rifiutato
-      add(LoadFriendRequestsEvent());
+      // Ricarica entrambi i dati con l'evento unificato
+      add(LoadFriendsAndRequestsEvent());
     } catch (e) {
       emit(FriendsError('Failed to decline friend request: ${e.toString()}'));
     }
@@ -128,8 +152,8 @@ class FriendsBloc extends Bloc<FriendsEvent, FriendsState> {
       await _friendRepository.removeFriend(event.friendId);
       emit(FriendRemoved(event.friendId));
       
-      // Ricarica la lista degli amici dopo la rimozione
-      add(LoadFriendsEvent());
+      // Ricarica entrambi i dati con l'evento unificato
+      add(LoadFriendsAndRequestsEvent());
     } catch (e) {
       emit(FriendsError('Impossibile rimuovere l\'amicizia: ${e.toString()}'));
     }

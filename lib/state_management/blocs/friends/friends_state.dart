@@ -38,6 +38,24 @@ class FriendsLoaded extends FriendsState {
   List<Object?> get props => [friends];
 }
 
+/// Stato che rappresenta sia amici che richieste caricate
+class FriendsAndRequestsLoaded extends FriendsState {
+  /// Lista degli amici dell'utente corrente
+  final List<UserProfile> friends;
+  
+  /// Richieste di amicizia pendenti
+  final List<FriendRequest> requests;
+  
+  /// Costruttore
+  FriendsAndRequestsLoaded({
+    required this.friends,
+    required this.requests,
+  });
+  
+  @override
+  List<Object?> get props => [friends, requests];
+}
+
 /// Stato che rappresenta una richiesta di amicizia inviata
 class FriendRequestSent extends FriendsState {
   /// ID dell'utente a cui è stata inviata la richiesta

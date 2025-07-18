@@ -48,21 +48,29 @@ class FriendRepositoryImpl implements FriendRepository {
   Future<List<FriendRequest>> getPendingFriendRequests() async {
     try {
       print('Repository: Fetching pending friend requests');
-      final requestsData = await _friendService.getFriendRequests();
+      final currentUserId = _supabase.auth.currentUser?.id;
+      if (currentUserId == null) {
+        throw Exception('User not authenticated');
+      }
+      
+      // Get both incoming and outgoing requests
+      final requestsData = await _supabase
+          .from('friends')
+          .select()
+          .or('and(user_id.eq.$currentUserId),and(friend_id.eq.$currentUserId)')
+          .eq('status', 'pending');
+      
       print('Repository: Got ${requestsData.length} requests, beginning conversion');
       
-      // Richiediamo i dati dei profili separatamente
       final friendRequests = <FriendRequest>[];
       
       for (final data in requestsData) {
         print('Converting request: $data');
-        // Verifica la presenza di ogni campo richiesto
-        if (data['id'] == null) print('WARNING: Missing id in friend request data');
-        if (data['user_id'] == null) print('WARNING: Missing user_id in friend request data');
-        if (data['friend_id'] == null) print('WARNING: Missing friend_id in friend request data');
-        if (data['status'] == null) print('WARNING: Missing status in friend request data');
         
-        // Convertiamo i campi della tabella friends al modello FriendRequest
+        final isIncoming = data['friend_id'] == currentUserId;
+        final otherUserId = isIncoming ? data['user_id'] : data['friend_id'];
+        
+        // Convert database fields to FriendRequest model
         final Map<String, dynamic> convertedData = {
           'id': data['id'],
           'sender_id': data['user_id'],
@@ -74,43 +82,39 @@ class FriendRepositoryImpl implements FriendRepository {
         print('Converted to: $convertedData');
         
         try {
-          // Crea una richiesta di amicizia di base
           final request = FriendRequest.fromJson(convertedData);
           print('Successfully converted to FriendRequest: ${request.id}');
           
-          // Recupera i dati del mittente dalla tabella profiles
+          // Get profile data for the other user
           try {
-            final senderId = data['user_id'];
-            print('Attempting to find user profile for sender ID: $senderId');
+            print('Attempting to find user profile for user ID: $otherUserId');
             
-            final senderResponse = await _supabase
+            final userResponse = await _supabase
                 .from('profiles')
                 .select()
-                .eq('id', senderId)
+                .eq('id', otherUserId)
                 .single();
             
-            print('Sender profile data: $senderResponse');
+            print('User profile data: $userResponse');
             
-            if (senderResponse != null) {
-              final senderProfile = UserProfile(
-                id: senderResponse['id'],
-                username: senderResponse['username'] ?? 'Utente',
-                avatarUrl: senderResponse['avatar_url'],
-                displayName: senderResponse['display_name'],
+            if (userResponse != null) {
+              final userProfile = UserProfile(
+                id: userResponse['id'],
+                username: userResponse['username'] ?? 'User',
+                avatarUrl: userResponse['avatar_url'],
+                displayName: userResponse['display_name'],
               );
               
-              print('Created UserProfile for sender: ${senderProfile.username}');
+              print('Created UserProfile for user: ${userProfile.username}');
               
-              // Aggiunge il profilo alla richiesta
-              final updatedRequest = request.copyWith(sender: senderProfile);
+              // Add profile to request (for incoming requests, this is the sender)
+              final updatedRequest = request.copyWith(sender: userProfile);
               friendRequests.add(updatedRequest);
             } else {
-              // Fallback se non c'è risposta
               friendRequests.add(request);
             }
           } catch (profileError) {
-            print('ERROR: Failed to fetch sender profile: $profileError');
-            // Fallback in caso di errore
+            print('ERROR: Failed to fetch user profile: $profileError');
             friendRequests.add(request);
           }
         } catch (e) {
